@@ -21,6 +21,7 @@ const REQUIRED_ENV_VARS: Record<ProviderType, string> = {
   nvidia: 'NVIDIA_API_KEY',
   openrouter: 'OPENROUTER_API_KEY',
   ollama: 'OLLAMA_BASE_URL (optional, defaults to localhost)',
+  google: 'GOOGLE_AI_API_KEY',
 };
 
 async function main() {
@@ -59,6 +60,13 @@ async function main() {
     registered.push('openrouter');
   } else {
     missing.push({ provider: 'openrouter', reason: 'OPENROUTER_API_KEY not set' });
+  }
+
+  if (process.env.GOOGLE_AI_API_KEY) {
+    harness.registerProvider('google', { apiKey: process.env.GOOGLE_AI_API_KEY });
+    registered.push('google');
+  } else {
+    missing.push({ provider: 'google', reason: 'GOOGLE_AI_API_KEY not set' });
   }
 
   // Ollama: check OLLAMA_BASE_URL specifically
