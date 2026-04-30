@@ -85,7 +85,7 @@ export abstract class AIProvider {
   abstract fetchModels(): Promise<ModelInfo[]>;
 }
 
-export type ProviderType = 'openai' | 'claude' | 'nvidia' | 'openrouter' | 'ollama';
+export type ProviderType = 'openai' | 'claude' | 'nvidia' | 'openrouter' | 'ollama' | 'google';
 
 export interface ProviderConfig {
   apiKey?: string;
