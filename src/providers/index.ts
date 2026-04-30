@@ -3,3 +3,4 @@ export { ClaudeProvider } from './claude.js';
 export { NvidiaProvider } from './nvidia.js';
 export { OpenRouterProvider } from './openrouter.js';
 export { OllamaProvider } from './ollama.js';
+export { GoogleProvider } from './google.js';
