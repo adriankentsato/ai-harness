@@ -1,7 +1,7 @@
 {
   "name": "ai-harness",
   "version": "1.0.0",
-  "description": "Unified AI harness for OpenAI, Claude, NVIDIA NIM, OpenRouter, and Ollama",
+  "description": "Unified AI harness for OpenAI, Claude, Google AI, NVIDIA NIM, OpenRouter, and Ollama",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^1.2.10",
+    "@ai-sdk/google": "^1.2.22",
     "@ai-sdk/openai": "^1.3.10",
     "ai": "^4.3.9",
     "ollama": "^0.5.14",
