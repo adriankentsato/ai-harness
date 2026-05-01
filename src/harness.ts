@@ -4,6 +4,7 @@ import {
   NvidiaProvider,
   OpenRouterProvider,
   OllamaProvider,
+  GoogleProvider,
 } from './providers/index';
 import type {
   AIProvider,
@@ -72,6 +73,14 @@ export class AIHarness {
       case 'ollama':
         provider = new OllamaProvider({
           baseUrl: config.baseUrl,
+          timeout: config.timeout,
+        });
+        break;
+
+      case 'google':
+        if (!config.apiKey) throw new Error('Google requires apiKey');
+        provider = new GoogleProvider({
+          apiKey: config.apiKey,
           timeout: config.timeout,
         });
         break;
