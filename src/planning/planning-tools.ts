@@ -1,6 +1,7 @@
 import type { ToolDefinition, Plan } from '../types/index';
 import { PlanningService } from './planning-service';
 import type { AIProvider } from '../types/index';
+import type { ToolDefinition as ToolDef } from '../types/core';
 
 interface PlanningToolArgs {
   goal: string;
@@ -22,7 +23,7 @@ interface PlanStatusArgs {
 const activePlans = new Map<string, Plan>();
 const planningServices = new Map<string, PlanningService>();
 
-export function createPlanningTools(provider: AIProvider, tools: any[] = []): ToolDefinition[] {
+export function createPlanningTools(provider: AIProvider, tools: ToolDef[] = []): ToolDefinition[] {
   const serviceId = `service_${Date.now()}`;
   planningServices.set(serviceId, new PlanningService(provider, tools));
 

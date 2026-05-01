@@ -172,9 +172,11 @@ Keep steps focused and atomic. Each step should accomplish one clear thing.`;
         step.status === 'completed' || step.status === 'failed'
       );
 
+      const anyFailed = plan.steps.some(step => step.status === 'failed');
+
       if (allCompleted) {
-        plan.status = 'completed';
-        executionLog.push('Plan execution completed');
+        plan.status = anyFailed ? 'failed' : 'completed';
+        executionLog.push(anyFailed ? 'Plan execution completed with failures' : 'Plan execution completed');
       } else {
         plan.status = 'failed';
         executionLog.push('Plan execution failed - some steps could not be completed');
