@@ -1,7 +1,7 @@
 import { generateText, streamText, tool, type CoreTool } from 'ai';
 import { createOllama } from 'ollama-ai-provider';
 import { z } from 'zod';
-import type { AIProvider, Message, CompletionOptions, CompletionResult, StreamChunk, ModelInfo, ToolDefinition } from '../types.js';
+import type { AIProvider, Message, CompletionOptions, CompletionResult, StreamChunk, ModelInfo, ToolDefinition } from '../types/index';
 
 export class OllamaProvider implements AIProvider {
   readonly name = 'ollama';

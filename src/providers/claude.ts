@@ -1,7 +1,7 @@
 import { generateText, streamText, tool, type CoreTool } from 'ai';
 import { anthropic } from '@ai-sdk/anthropic';
 import { z } from 'zod';
-import type { AIProvider, Message, CompletionOptions, CompletionResult, StreamChunk, ModelInfo, ToolDefinition } from '../types.js';
+import type { AIProvider, Message, CompletionOptions, CompletionResult, StreamChunk, ModelInfo, ToolDefinition } from '../types/index';
 
 export class ClaudeProvider implements AIProvider {
   readonly name = 'claude';

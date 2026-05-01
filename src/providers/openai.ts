@@ -1,7 +1,7 @@
 import { generateText, streamText, tool, type CoreTool } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { z } from 'zod';
-import type { AIProvider, Message, CompletionOptions, CompletionResult, StreamChunk, ModelInfo, ToolDefinition } from '../types.js';
+import type { AIProvider, Message, CompletionOptions, CompletionResult, StreamChunk, ModelInfo, ToolDefinition } from '../types/index';
 
 export class OpenAIProvider implements AIProvider {
   readonly name = 'openai';

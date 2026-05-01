@@ -1,6 +1,6 @@
-export { OpenAIProvider } from './openai.js';
-export { ClaudeProvider } from './claude.js';
-export { NvidiaProvider } from './nvidia.js';
-export { OpenRouterProvider } from './openrouter.js';
-export { OllamaProvider } from './ollama.js';
-export { GoogleProvider } from './google.js';
+export { OpenAIProvider } from './openai';
+export { ClaudeProvider } from './claude';
+export { NvidiaProvider } from './nvidia';
+export { OpenRouterProvider } from './openrouter';
+export { OllamaProvider } from './ollama';
+export { GoogleProvider } from './google';
