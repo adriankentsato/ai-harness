@@ -1,5 +1,5 @@
-import { AIHarness } from './harness.js';
-import type { Message } from './types.js';
+import { AIHarness } from './harness';
+import type { Message } from './types/index';
 
 async function main() {
   const harness = new AIHarness();

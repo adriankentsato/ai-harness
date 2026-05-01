@@ -1,17 +1,23 @@
-export { AIHarness } from './harness.js';
+export { AIHarness } from './harness';
 export {
   OpenAIProvider,
   ClaudeProvider,
   NvidiaProvider,
   OpenRouterProvider,
   OllamaProvider,
-} from './providers/index.js';
+} from './providers/index';
 export {
   availableTools,
   getTool,
   createToolSet,
   bashTool,
-} from './tools/index.js';
+} from './tools/index';
+export {
+  BaseAgent,
+  createAgent,
+  createCodeAssistantAgent,
+  createDataAnalystAgent,
+} from './agents/index';
 export type {
   AIProvider,
   Message,
@@ -24,5 +30,13 @@ export type {
   ToolDefinition,
   ToolCall,
   ToolResult,
-} from './types.js';
-export type { BashToolArgs } from './tools/bash.js';
+  Agent,
+  AgentConfig,
+  AgentContext,
+  AgentResult,
+  AgentTask,
+  WorkflowResult,
+  WorkflowSummary,
+  WorkflowOptions,
+} from './types/index';
+export type { BashToolArgs } from './tools/bash';
