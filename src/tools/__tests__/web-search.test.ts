@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { webSearchTool } from '../web-search.js';
+import { webSearchTool } from '../web-search';
 
 // Mock fetch to avoid actual network calls
 const mockFetch = vi.fn();

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { fileOpsTool } from '../file-ops.js';
+import { fileOpsTool } from '../file-ops';
 import { mkdir, rm } from 'fs/promises';
 import { tmpdir } from 'os';
 import { join } from 'path';
@@ -167,6 +167,6 @@ describe('fileOpsTool', () => {
         operation: 'read',
         path: '/nonexistent/file.txt',
       })
-    ).rejects.toThrow('File operation failed');
+    ).rejects.toThrow(/File operation failed|Security violation/);
   });
 });

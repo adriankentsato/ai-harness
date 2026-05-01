@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { PlanningService } from '../planning-service.js';
-import type { AIProvider, Plan, ToolDefinition } from '../../types.js';
+import { PlanningService } from '../planning-service';
+import type { AIProvider, Plan, ToolDefinition } from '../../types/index';
 
 describe('PlanningService', () => {
   let mockProvider: AIProvider;
