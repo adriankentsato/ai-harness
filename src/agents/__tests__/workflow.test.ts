@@ -13,7 +13,7 @@ describe('Agent Workflow Execution', () => {
       // Add a small delay to simulate real execution time
       await new Promise(resolve => setTimeout(resolve, 10));
       
-      const responses: Record<string, any> = {
+      const responses: Record<string, { response: string; usage: { promptTokens: number; completionTokens: number; totalTokens: number } }> = {
         'code-assistant': {
           response: 'Code response',
           usage: { promptTokens: 10, completionTokens: 20, totalTokens: 30 },

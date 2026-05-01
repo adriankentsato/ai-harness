@@ -15,7 +15,7 @@ describe('PlanningService', () => {
       fetchModels: vi.fn(),
       name: 'test',
       defaultModel: 'test-model',
-    } as any;
+    } as unknown as AIProvider;
 
     mockTools = [
       {
@@ -146,8 +146,12 @@ describe('PlanningService', () => {
       expect(result.plan.steps[0].status).toBe('completed');
       expect(result.plan.steps[1].status).toBe('completed');
       expect(mockTools[0].execute).toHaveBeenCalledWith({ command: 'echo test' });
-      expect(result.executionLog).toContain('Starting execution of plan');
-      expect(result.executionLog).toContain('Plan execution completed');
+      expect(result.executionLog).toEqual(
+        expect.arrayContaining([
+          expect.stringContaining('Starting execution of plan'),
+          expect.stringContaining('Plan execution completed'),
+        ])
+      );
     });
 
     it('should handle step failures', async () => {
@@ -159,7 +163,9 @@ describe('PlanningService', () => {
       expect(result.plan.status).toBe('failed');
       expect(result.plan.steps[1].status).toBe('failed');
       expect(result.plan.steps[1].error).toBe('Command failed');
-      expect(result.executionLog).toContain('Step failed');
+      expect(result.executionLog).toEqual(
+        expect.arrayContaining([expect.stringContaining('Step failed')])
+      );
     });
 
     it('should respect step dependencies', async () => {
@@ -199,7 +205,7 @@ describe('PlanningService', () => {
 
       await planningService.executePlan(mockPlan, {}, onStepUpdate);
 
-      expect(onStepUpdate).toHaveBeenCalledTimes(2); // Once for each step
+      expect(onStepUpdate).toHaveBeenCalledTimes(4); // Twice for each step (in_progress and completed)
     });
 
     it('should pause on failure when requireConfirmation is true', async () => {

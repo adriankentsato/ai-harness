@@ -16,7 +16,7 @@ describe('gitOpsTool', () => {
       await execAsync('git init', { cwd: testDir });
       await execAsync('git config user.name "Test User"', { cwd: testDir });
       await execAsync('git config user.email "test@example.com"', { cwd: testDir });
-    } catch (error) {
+    } catch (_error) {
       // Git might not be available, skip tests
       console.log('Git not available, skipping tests');
     }
@@ -108,7 +108,7 @@ describe('gitOpsTool', () => {
         operation: 'add',
         cwd: testDir
       })).rejects.toThrow('files are required');
-    } catch (error) {
+    } catch (_error) {
       // Expected error
     }
   });

@@ -171,7 +171,7 @@ describe('webSearchTool', () => {
 
   it('should handle unknown provider', async () => {
     await expect(
-      webSearchTool.execute({ query: 'test', provider: 'unknown' as any })
+      webSearchTool.execute({ query: 'test', provider: 'unknown' as string })
     ).rejects.toThrow('Unknown search provider: unknown');
   });
 

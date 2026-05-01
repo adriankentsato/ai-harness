@@ -14,7 +14,7 @@ describe('Agent System', () => {
     mockHarness = {
       complete: vi.fn(),
       hasProvider: vi.fn().mockReturnValue(true),
-    } as any;
+    } as unknown as AIHarness;
 
     agentConfig = {
       name: 'test-agent',
