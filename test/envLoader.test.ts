@@ -6,7 +6,7 @@ import * as path from 'path';
 
 describe('envLoader parseEnvContent', () => {
   test('parses basic key=value lines and quotes', () => {
-    const content = `FOO=bar\nBAR="baz qux"\n# comment line\nEMPTY=``\n`;
+    const content = `FOO=bar\nBAR="baz qux"\n# comment line\nEMPTY=\`\`\n`;
     const parsed = parseEnvContent(content);
     expect(parsed.FOO).toBe('bar');
     expect(parsed.BAR).toBe('baz qux');
