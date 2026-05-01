@@ -1,4 +1,4 @@
-import type { ToolDefinition } from '../types.js';
+import type { ToolDefinition } from '../types/index';
 
 export interface WebSearchArgs {
   query: string;

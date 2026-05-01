@@ -1,6 +1,7 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import type { ToolDefinition } from '../types.js';
+import type { ToolDefinition } from '../types/index';
+import { validateCommandSecure, SecurityError } from '../utils/security';
 
 const execAsync = promisify(exec);
 
@@ -16,6 +17,16 @@ async function executeBash(args: Record<string, unknown>): Promise<string> {
 
   if (!command || typeof command !== 'string') {
     throw new Error('command is required and must be a string');
+  }
+
+  // Security validation
+  try {
+    validateCommandSecure(command);
+  } catch (error) {
+    if (error instanceof SecurityError) {
+      throw error;
+    }
+    throw new Error(`Security validation failed: ${error}`);
   }
 
   const cwdPath = cwd || process.cwd();

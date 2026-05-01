@@ -1,7 +1,8 @@
 import { readFile, writeFile, appendFile, copyFile, mkdir, readdir, stat, unlink, rename } from 'fs/promises';
 import { resolve, dirname } from 'path';
 import { existsSync } from 'fs';
-import type { ToolDefinition } from '../types.js';
+import type { ToolDefinition } from '../types/index';
+import { validatePathSecure, validateFileSizeSecure, SecurityError } from '../utils/security';
 
 export interface FileOpsArgs {
   operation: 'read' | 'write' | 'append' | 'copy' | 'move' | 'delete' | 'create_dir' | 'list_dir' | 'stat' | 'exists';
@@ -22,12 +23,36 @@ async function executeFileOps(args: Record<string, unknown>): Promise<string> {
 
   const resolvedPath = resolve(path);
 
+  // Security validation for main path
+  try {
+    validatePathSecure(path);
+  } catch (error) {
+    if (error instanceof SecurityError) {
+      throw error;
+    }
+    throw new Error(`Security validation failed: ${error}`);
+  }
+
+  // Security validation for destination path (for copy/move operations)
+  if (destination) {
+    try {
+      validatePathSecure(destination);
+    } catch (error) {
+      if (error instanceof SecurityError) {
+        throw error;
+      }
+      throw new Error(`Security validation failed for destination: ${error}`);
+    }
+  }
+
   try {
     switch (operation) {
       case 'read': {
         if (!existsSync(resolvedPath)) {
           throw new Error(`File not found: ${resolvedPath}`);
         }
+        const stats = await stat(resolvedPath);
+        validateFileSizeSecure(stats.size);
         const data = await readFile(resolvedPath, encoding);
         return data.length > 50000 
           ? data.slice(0, 50000) + '\n... (truncated, file too large)'
