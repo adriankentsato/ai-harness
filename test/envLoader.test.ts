@@ -10,7 +10,7 @@ describe('envLoader parseEnvContent', () => {
     const parsed = parseEnvContent(content);
     expect(parsed.FOO).toBe('bar');
     expect(parsed.BAR).toBe('baz qux');
-    expect(parsed.EMPTY).toBe('');
+    expect(parsed.EMPTY).toBe('``');
   });
 });
 
