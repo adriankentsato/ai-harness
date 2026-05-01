@@ -1,17 +1,21 @@
 #!/usr/bin/env node
 
 import { createInterface } from 'readline';
-import { AIHarness } from './harness.js';
-import { bashTool, fileOpsTool, webSearchTool } from './tools/index.js';
-import type { Message, ProviderType, ToolDefinition } from './types.js';
+import { AIHarness } from './harness';
+import { bashTool, fileOpsTool, webSearchTool, databaseUserTool, gitOpsTool, processOpsTool, runNpmScriptsTool } from './tools/index';
+import type { Message, ProviderType, ToolDefinition } from './types/index';
 
 const SYSTEM_PROMPT = 'You are a helpful assistant. Be concise and clear.';
 const TOOLS_SYSTEM_PROMPT = `You are a helpful assistant with access to system tools. Be concise and clear.
 
 You have access to the following tools:
-- bash: Execute bash commands on the local system. Use for file operations, running scripts, checking system info, git commands, etc.
 - file_ops: Perform native file system operations including read, write, append, copy, move, delete, create directories, list directory contents, get file stats, and check if paths exist.
 - web_search: Search the web for information using multiple search providers (DuckDuckGo, Brave, SearX). Returns relevant web pages with titles, URLs, and snippets.
+- database_user: Connect to a SQLite database and perform user information operations (create, read, update, delete users).
+- git_ops: Perform Git operations with strict working directory restrictions. Supports status, log, add, commit, push, pull, branch, checkout, diff, show, init, and clone operations.
+- process_ops: Perform safe process operations with strict working directory restrictions. Supports listing processes, killing processes, getting process info, and checking tool versions.
+- run_npm_scripts: Execute npm scripts and package management operations with strict working directory restrictions. Supports listing scripts, running custom scripts, install, test, build, start, and dev operations.
+${process.argv.includes('--enable-bash') ? '- bash: Execute bash commands on the local system. Use for file operations, running scripts, checking system info, git commands, etc. (DANGEROUS - ENABLED WITH --enable-bash FLAG)' : ''}
 
 When you need to use a tool, the system will automatically execute it and return results to you.`;
 
@@ -120,7 +124,8 @@ async function main() {
     console.log('  /model <name>   - Switch model');
     console.log('  /provider, /p   - Switch provider');
     console.log('  /clear, /c      - Clear conversation');
-    console.log('  /tools, /t      - Toggle tools (bash, file_ops, web_search) on/off');
+    console.log('  /tools, /t      - Toggle specialized tools (file_ops, web_search, database_user, git_ops, process_ops, run_npm_scripts) on/off');
+    console.log('  /list-tools, /lt - List all available tools with descriptions');
     console.log('  /plan <goal>    - Create a plan for a goal');
     console.log('  /execute [id]   - Execute a plan');
     console.log('  /status [id]    - Show plan status');
@@ -300,7 +305,15 @@ async function main() {
             addMessage('system', SYSTEM_PROMPT);
             console.log('Tools disabled. Using standard system prompt.\n');
           } else {
-            enabledTools = [bashTool, fileOpsTool, webSearchTool];
+            // Default tools (always safe)
+            enabledTools = [fileOpsTool, webSearchTool, databaseUserTool, gitOpsTool, processOpsTool, runNpmScriptsTool];
+            
+            // Only include bash tool if --enable-bash flag is provided
+            if (process.argv.includes('--enable-bash')) {
+              enabledTools.push(bashTool);
+              console.log('⚠️  Bash tool enabled with --enable-bash flag - use with caution!');
+            }
+            
             messages.length = 0;
             addMessage('system', TOOLS_SYSTEM_PROMPT);
             console.log(`Tools enabled: ${enabledTools.map(t => t.name).join(', ')}`);
@@ -379,6 +392,42 @@ async function main() {
           rl.prompt();
           return;
 
+        case 'list-tools':
+        case 'lt':
+          console.log('\n┌─ Available Tools ─────────────────────┐');
+          console.log('│                                        │');
+          
+          const allTools = [
+            bashTool,
+            fileOpsTool, 
+            webSearchTool,
+            databaseUserTool,
+            gitOpsTool,
+            processOpsTool,
+            runNpmScriptsTool
+          ];
+
+          allTools.forEach(tool => {
+            const isBash = tool.name === 'bash';
+            const status = isBash && !process.argv.includes('--enable-bash') ? '🔒' : '✓';
+            const name = tool.name.padEnd(16);
+            const desc = tool.description.slice(0, 35).padEnd(35);
+            console.log(`│  ${status} ${name} ${desc} │`);
+          });
+          
+          console.log('│                                        │');
+          console.log('│  Status: ✓ = Available, 🔒 = Requires   │');
+          console.log('│          --enable-bash flag           │');
+          console.log('└────────────────────────────────────────┘\n');
+          
+          if (enabledTools.length > 0) {
+            console.log(`Currently enabled: ${enabledTools.map(t => t.name).join(', ')}\n`);
+          } else {
+            console.log('No tools currently enabled. Use /tools to enable.\n');
+          }
+          rl.prompt();
+          return;
+
         case 'help':
         case 'h':
           console.log('\nCommands:');
@@ -386,7 +435,9 @@ async function main() {
           console.log('  /models, /m        - List available models');
           console.log('  /model <name>      - Switch model');
           console.log('  /provider, /p      - Switch provider');
-          console.log('  /tools, /t         - Toggle bash, file operations, and web search tools on/off');
+          console.log('  /tools, /t         - Toggle specialized tools (file_ops, web_search, database_user, git_ops, process_ops, run_npm_scripts) on/off');
+    console.log('                    (bash tool requires --enable-bash flag for security)');
+          console.log('  /list-tools, /lt  - List all available tools with descriptions');
           console.log('  /plan <goal>       - Create a plan for a goal');
           console.log('  /execute [id]      - Execute a plan');
           console.log('  /status [id]       - Show plan status');
