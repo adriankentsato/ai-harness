@@ -1,5 +1,5 @@
 import { generateText, streamText, tool, type CoreTool } from 'ai';
-import { google } from '@ai-sdk/google';
+import { createGoogleGenerativeAI, type GoogleGenerativeAIProvider } from '@ai-sdk/google';
 import { z } from 'zod';
 import type { AIProvider, Message, CompletionOptions, CompletionResult, StreamChunk, ModelInfo, ToolDefinition } from '../types/index';
 
@@ -9,10 +9,12 @@ export class GoogleProvider implements AIProvider {
 
   private apiKey: string;
   private timeoutMs: number;
+  private google: GoogleGenerativeAIProvider;
 
   constructor(config: { apiKey: string; timeout?: number }) {
     this.apiKey = config.apiKey;
     this.timeoutMs = config.timeout || 60000;
+    this.google = createGoogleGenerativeAI({ apiKey: this.apiKey });
   }
 
   validateConfig(): boolean {
@@ -61,7 +63,7 @@ export class GoogleProvider implements AIProvider {
             };
           });
       }
-    } catch (error) {
+    } catch (_error) {
       // Fallback to library models if API fails
     }
 
@@ -127,7 +129,7 @@ export class GoogleProvider implements AIProvider {
     const tools = this.buildTools(options.tools);
 
     const result = await generateText({
-      model: google(model),
+      model: this.google(model),
       messages: messages.map(m => ({
         role: m.role,
         content: m.content,
@@ -164,7 +166,7 @@ export class GoogleProvider implements AIProvider {
     const tools = this.buildTools(options.tools);
 
     const result = await streamText({
-      model: google(model),
+      model: this.google(model),
       messages: messages.map(m => ({
         role: m.role,
         content: m.content,

@@ -100,7 +100,7 @@ export class OpenAIProvider implements AIProvider {
             description: `Owned by ${m.owned_by}`,
           }));
       }
-    } catch (error) {
+    } catch (_error) {
       // Fallback to library models if API fails
     }
 
@@ -214,9 +214,9 @@ export class OpenAIProvider implements AIProvider {
 
     clearTimeout(timeoutId);
 
-    let fullText = '';
+    let _fullText = '';
     for await (const chunk of result.textStream) {
-      fullText += chunk;
+      _fullText += chunk;
       yield {
         text: chunk,
         isComplete: false,

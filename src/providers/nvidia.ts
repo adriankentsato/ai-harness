@@ -158,22 +158,22 @@ export class NvidiaProvider implements AIProvider {
 
     clearTimeout(timeoutId);
 
-    let fullText = '';
     for await (const chunk of result.textStream) {
-      fullText += chunk;
       yield {
         text: chunk,
         isComplete: false,
       };
     }
 
+    const usage = await result.usage;
+
     yield {
       text: '',
       isComplete: true,
       usage: {
-        promptTokens: 0,
-        completionTokens: 0,
-        totalTokens: 0,
+        promptTokens: usage.promptTokens,
+        completionTokens: usage.completionTokens,
+        totalTokens: usage.totalTokens,
       },
     };
   }

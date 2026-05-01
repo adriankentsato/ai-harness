@@ -61,7 +61,7 @@ export class ClaudeProvider implements AIProvider {
           contextLength: m.id.includes('opus') ? 200000 : 200000,
         }));
       }
-    } catch (error) {
+    } catch (_error) {
       // Fallback to library models if API fails
     }
 

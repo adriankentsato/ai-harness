@@ -175,9 +175,9 @@ export class OpenRouterProvider implements AIProvider {
 
     clearTimeout(timeoutId);
 
-    let fullText = '';
+    let _fullText = '';
     for await (const chunk of result.textStream) {
-      fullText += chunk;
+      _fullText += chunk;
       yield {
         text: chunk,
         isComplete: false,
