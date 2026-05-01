@@ -1,10 +1,11 @@
 import { Agent, type AgentConfig, type AgentContext, type AgentResult, type Message } from '../types/index';
+import type { AIHarness } from '../harness';
 
 export class CodeAssistantAgent extends Agent {
   readonly name: string;
   readonly description: string;
 
-  constructor(config: AgentConfig, harness: any) {
+  constructor(config: AgentConfig, harness: AIHarness) {
     super(config, harness);
     this.name = config.name;
     this.description = config.description;
@@ -46,7 +47,7 @@ When providing code, always include proper explanations and follow best practice
   }
 }
 
-export function createCodeAssistantAgent(config: AgentConfig, harness: any): Agent {
+export function createCodeAssistantAgent(config: AgentConfig, harness: AIHarness): Agent {
   return new CodeAssistantAgent({
     ...config,
     systemPrompt: config.systemPrompt || `You are a helpful code assistant. You specialize in writing clean, maintainable code and explaining programming concepts.`,

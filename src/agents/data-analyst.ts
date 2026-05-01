@@ -1,10 +1,11 @@
 import { Agent, type AgentConfig, type AgentContext, type AgentResult, type Message } from '../types/index';
+import type { AIHarness } from '../harness';
 
 export class DataAnalystAgent extends Agent {
   readonly name: string;
   readonly description: string;
 
-  constructor(config: AgentConfig, harness: any) {
+  constructor(config: AgentConfig, harness: AIHarness) {
     super(config, harness);
     this.name = config.name;
     this.description = config.description;
@@ -47,7 +48,7 @@ Always provide clear explanations of your analysis and any assumptions you make.
   }
 }
 
-export function createDataAnalystAgent(config: AgentConfig, harness: any): Agent {
+export function createDataAnalystAgent(config: AgentConfig, harness: AIHarness): Agent {
   return new DataAnalystAgent({
     ...config,
     systemPrompt: config.systemPrompt || `You are a data analyst assistant specializing in data analysis, visualization, and statistical insights.`,

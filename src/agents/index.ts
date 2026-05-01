@@ -1,10 +1,11 @@
 import { Agent, type AgentConfig, type AgentContext, type AgentResult, type Message } from '../types/index';
+import type { AIHarness } from '../harness';
 
 export class BaseAgent extends Agent {
   readonly name: string;
   readonly description: string;
 
-  constructor(config: AgentConfig, harness: any) {
+  constructor(config: AgentConfig, harness: AIHarness) {
     super(config, harness);
     this.name = config.name;
     this.description = config.description;
@@ -37,7 +38,7 @@ export class BaseAgent extends Agent {
   }
 }
 
-export function createAgent(config: AgentConfig, harness: any): Agent {
+export function createAgent(config: AgentConfig, harness: AIHarness): Agent {
   return new BaseAgent(config, harness);
 }
 
