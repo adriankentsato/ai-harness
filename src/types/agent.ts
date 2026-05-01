@@ -1,4 +1,5 @@
 import { Message, ToolDefinition, ToolCall, ProviderType } from './core';
+import type { AIHarness } from '../harness';
 
 export interface AgentConfig {
   name: string;
@@ -32,9 +33,9 @@ export abstract class Agent {
   abstract readonly name: string;
   abstract readonly description: string;
   protected config: AgentConfig;
-  protected harness: any; // AIHarness instance - using any to avoid circular dependency
+  protected harness: AIHarness; // AIHarness instance
 
-  constructor(config: AgentConfig, harness: any) {
+  constructor(config: AgentConfig, harness: AIHarness) {
     this.config = config;
     this.harness = harness;
   }
