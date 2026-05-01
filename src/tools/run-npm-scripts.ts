@@ -108,7 +108,7 @@ async function executeRunNpmScripts(args: Record<string, unknown>): Promise<stri
 
     // For operations that run commands (not list), execute with timeout
     if (command) {
-      const { stdout, stderr } = await execAsync(command, {
+      const result = await execAsync(command, {
         cwd: workingDir,
         timeout,
         maxBuffer: 2 * 1024 * 1024, // 2MB buffer for npm output
@@ -119,8 +119,10 @@ async function executeRunNpmScripts(args: Record<string, unknown>): Promise<stri
           npm_config_fund: 'false',
           npm_config_update_notifier: 'false',
         },
-      });
+      }) as { stdout: string; stderr: string } | [string, string];
 
+      const stdout = Array.isArray(result) ? result[0] : result.stdout;
+      const stderr = Array.isArray(result) ? result[1] : result.stderr;
       const output = stdout || stderr;
 
       // Format output

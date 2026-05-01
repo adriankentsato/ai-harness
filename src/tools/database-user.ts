@@ -77,7 +77,19 @@ function initializeSchema(): void {
   `);
 }
 
-function mapRowToUser(row: any): User {
+interface DatabaseUserRow {
+  id: string;
+  first_name: string;
+  last_name: string;
+  full_name: string;
+  email: string;
+  password_hash: string;
+  created_at: string;
+  updated_at: string;
+  is_active: number;
+}
+
+function mapRowToUser(row: DatabaseUserRow): User {
   return {
     id: row.id,
     firstName: row.first_name,
@@ -100,34 +112,34 @@ async function executeDatabaseUser(args: Record<string, unknown>): Promise<strin
     throw new Error('operation is required and must be one of: get_user_by_id, get_user_by_email, get_all_users, create_user, update_user, delete_user');
   }
 
-  try {
-    const db = getDatabase();
-    let result: any;
+    try {
+      const db = getDatabase();
+      let result: unknown;
 
     switch (operation) {
       case 'get_user_by_id':
         if (!id || typeof id !== 'string') {
           throw new Error('id is required and must be a string for get_user_by_id operation');
         }
-        result = db.prepare('SELECT * FROM users WHERE id = ?').get(id);
+        result = db.prepare('SELECT * FROM users WHERE id = ?').get(id) as DatabaseUserRow | undefined;
         if (!result) {
           return `User with id '${id}' not found`;
         }
-        return JSON.stringify(mapRowToUser(result), null, 2);
-
+        return JSON.stringify(mapRowToUser(result as DatabaseUserRow), null, 2);
+      
       case 'get_user_by_email':
         if (!email || typeof email !== 'string') {
           throw new Error('email is required and must be a string for get_user_by_email operation');
         }
-        result = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+        result = db.prepare('SELECT * FROM users WHERE email = ?').get(email) as DatabaseUserRow | undefined;
         if (!result) {
           return `User with email '${email}' not found`;
         }
-        return JSON.stringify(mapRowToUser(result), null, 2);
-
+        return JSON.stringify(mapRowToUser(result as DatabaseUserRow), null, 2);
+      
       case 'get_all_users':
         const rows = db.prepare('SELECT * FROM users ORDER BY created_at DESC').all();
-        const users = rows.map(mapRowToUser);
+          const users = (rows as unknown[]).map(row => mapRowToUser(row as DatabaseUserRow));
         return JSON.stringify(users, null, 2);
 
       case 'create_user':
@@ -154,18 +166,18 @@ async function executeDatabaseUser(args: Record<string, unknown>): Promise<strin
             INSERT INTO users (id, first_name, last_name, full_name, email, password_hash, created_at, updated_at, is_active)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
           `);
-          
+           
           stmt.run(userId, firstName, lastName, fullName, email, passwordHash, now, now, 1);
-          
+           
           const newUser = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
-          return JSON.stringify(mapRowToUser(newUser), null, 2);
-        } catch (error: any) {
-          if (error.message.includes('UNIQUE constraint failed')) {
+          return JSON.stringify(mapRowToUser(newUser as DatabaseUserRow), null, 2);
+        } catch (error) {
+          if (error instanceof Error && error.message.includes('UNIQUE constraint failed')) {
             throw new Error(`User with email '${email}' already exists`);
           }
           throw error;
         }
-
+ 
       case 'update_user':
         if (!id || typeof id !== 'string') {
           throw new Error('id is required and must be a string for update_user operation');
@@ -196,8 +208,9 @@ async function executeDatabaseUser(args: Record<string, unknown>): Promise<strin
         }
 
         if (firstName !== undefined || lastName !== undefined) {
-          const newFirst = firstName ?? (existingUser as any).first_name;
-          const newLast = lastName ?? (existingUser as any).last_name;
+          const existingRow = existingUser as DatabaseUserRow;
+          const newFirst = firstName ?? existingRow.first_name;
+          const newLast = lastName ?? existingRow.last_name;
           updates.push('full_name = ?');
           values.push(`${newFirst} ${newLast}`);
         }
@@ -237,11 +250,11 @@ async function executeDatabaseUser(args: Record<string, unknown>): Promise<strin
         try {
           const updateStmt = db.prepare(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`);
           updateStmt.run(...values);
-          
-          const updatedUser = db.prepare('SELECT * FROM users WHERE id = ?').get(id);
+           
+          const updatedUser = db.prepare('SELECT * FROM users WHERE id = ?').get(id) as DatabaseUserRow;
           return JSON.stringify(mapRowToUser(updatedUser), null, 2);
-        } catch (error: any) {
-          if (error.message.includes('UNIQUE constraint failed')) {
+        } catch (error) {
+          if (error instanceof Error && error.message.includes('UNIQUE constraint failed')) {
             throw new Error(`User with email '${email}' already exists`);
           }
           throw error;
@@ -262,8 +275,10 @@ async function executeDatabaseUser(args: Record<string, unknown>): Promise<strin
         throw new Error(`Unsupported operation: ${operation}`);
     }
   } catch (error) {
-    const err = error as Error;
-    throw new Error(`database_user operation failed: ${err.message}`);
+    if (error instanceof Error) {
+      throw new Error(`database_user operation failed: ${error.message}`);
+    }
+    throw error;
   }
 }
 

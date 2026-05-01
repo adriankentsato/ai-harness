@@ -41,3 +41,5 @@ export { processOpsTool } from './process-ops';
 export type { ProcessOpsArgs } from './process-ops';
 export { runNpmScriptsTool } from './run-npm-scripts';
 export type { RunNpmScriptsArgs } from './run-npm-scripts';
+export { createAgentWorkflowTools } from './agent-workflow';
+export type { CreateAgentArgs, RunAgentWorkflowArgs } from './agent-workflow';
