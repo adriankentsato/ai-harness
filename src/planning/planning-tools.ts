@@ -1,6 +1,6 @@
-import type { ToolDefinition, Plan } from '../types.js';
-import { PlanningService } from './planning-service.js';
-import type { AIProvider } from '../types.js';
+import type { ToolDefinition, Plan } from '../types/index';
+import { PlanningService } from './planning-service';
+import type { AIProvider } from '../types/index';
 
 interface PlanningToolArgs {
   goal: string;

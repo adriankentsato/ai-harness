@@ -5,7 +5,7 @@ import type {
   PlanningResult,
   AIProvider,
   ToolDefinition,
-} from '../types.js';
+} from '../types/index';
 
 export class PlanningService {
   private tools: Map<string, ToolDefinition> = new Map();
