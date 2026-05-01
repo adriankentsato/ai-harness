@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeEach } from 'vitest';
+import { describe, test, expect, beforeEach, afterEach } from 'vitest';
 import { parseEnvContent, loadEnvFromFile } from '../src/utils/envLoader';
 import * as fs from 'fs';
 import * as os from 'os';
