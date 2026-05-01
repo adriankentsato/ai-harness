@@ -4,7 +4,7 @@ import {
   NvidiaProvider,
   OpenRouterProvider,
   OllamaProvider,
-} from './providers/index.js';
+} from './providers/index';
 import type {
   AIProvider,
   Message,
@@ -14,11 +14,20 @@ import type {
   ProviderType,
   ProviderConfig,
   ModelInfo,
-} from './types.js';
+  Agent,
+  AgentConfig,
+  AgentContext,
+  AgentResult,
+  AgentTask,
+  WorkflowResult,
+  WorkflowSummary,
+  WorkflowOptions,
+} from './types/index';
 
 export class AIHarness {
   private providers: Map<ProviderType, AIProvider> = new Map();
   private configs: Map<ProviderType, ProviderConfig> = new Map();
+  private agents: Map<string, Agent> = new Map();
 
   registerProvider(type: ProviderType, config: ProviderConfig): void {
     this.configs.set(type, config);
@@ -150,7 +159,7 @@ export class AIHarness {
     goal: string,
     options?: { maxSteps?: number; allowTools?: boolean; requireConfirmation?: boolean }
   ) {
-    const { createPlanningTools } = await import('./planning/planning-tools.js');
+    const { createPlanningTools } = await import('./planning/planning-tools');
     const provider = this.getProvider(providerType);
     const planningTools = createPlanningTools(provider);
     
@@ -167,7 +176,7 @@ export class AIHarness {
     planId?: string,
     options?: { requireConfirmation?: boolean }
   ) {
-    const { createPlanningTools } = await import('./planning/planning-tools.js');
+    const { createPlanningTools } = await import('./planning/planning-tools');
     const provider = this.getProvider(providerType);
     const planningTools = createPlanningTools(provider);
     
@@ -183,7 +192,7 @@ export class AIHarness {
     providerType: ProviderType,
     planId?: string
   ) {
-    const { createPlanningTools } = await import('./planning/planning-tools.js');
+    const { createPlanningTools } = await import('./planning/planning-tools');
     const provider = this.getProvider(providerType);
     const planningTools = createPlanningTools(provider);
     
@@ -196,7 +205,7 @@ export class AIHarness {
   }
 
   async listPlans(providerType: ProviderType) {
-    const { createPlanningTools } = await import('./planning/planning-tools.js');
+    const { createPlanningTools } = await import('./planning/planning-tools');
     const provider = this.getProvider(providerType);
     const planningTools = createPlanningTools(provider);
     
@@ -206,5 +215,185 @@ export class AIHarness {
     }
 
     return await listPlansTool.execute({});
+  }
+
+  registerAgent(config: AgentConfig): void {
+    if (!this.hasProvider(config.provider)) {
+      throw new Error(`Provider not registered: ${config.provider}`);
+    }
+
+    const { createAgent } = require('./agents/index');
+    const agent = createAgent(config, this);
+    this.agents.set(config.name, agent);
+  }
+
+  getAgent(name: string): Agent {
+    const agent = this.agents.get(name);
+    if (!agent) {
+      throw new Error(`Agent not registered: ${name}`);
+    }
+    return agent;
+  }
+
+  hasAgent(name: string): boolean {
+    return this.agents.has(name);
+  }
+
+  listAgents(): string[] {
+    return Array.from(this.agents.keys());
+  }
+
+  async executeAgent(
+    name: string,
+    input: string,
+    context?: AgentContext
+  ): Promise<AgentResult> {
+    const agent = this.getAgent(name);
+    return await agent.execute(input, context);
+  }
+
+  async executeAgentsParallel(
+    tasks: AgentTask[],
+    options: WorkflowOptions = {}
+  ): Promise<WorkflowSummary> {
+    const startTime = Date.now();
+    const results: WorkflowResult[] = [];
+    const maxConcurrency = options.maxConcurrency || 5;
+    const timeout = options.timeout || 30000;
+
+    // Execute tasks in parallel batches
+    const batches: AgentTask[][] = [];
+    for (let i = 0; i < tasks.length; i += maxConcurrency) {
+      batches.push(tasks.slice(i, i + maxConcurrency));
+    }
+
+    for (const batch of batches) {
+      const batchPromises = batch.map(async (task): Promise<WorkflowResult> => {
+        const taskStartTime = Date.now();
+        try {
+          const result = await Promise.race([
+            this.executeAgent(task.agentName, task.input, task.context),
+            new Promise<never>((_, reject) => 
+              setTimeout(() => reject(new Error('Task timeout')), timeout)
+            )
+          ]);
+
+          return {
+            taskName: task.agentName,
+            agentName: task.agentName,
+            result,
+            executionTime: Date.now() - taskStartTime,
+          };
+        } catch (error) {
+          const workflowResult: WorkflowResult = {
+            taskName: task.agentName,
+            agentName: task.agentName,
+            result: {
+              response: '',
+              usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+            },
+            executionTime: Date.now() - taskStartTime,
+            error: error instanceof Error ? error.message : String(error),
+          };
+
+          if (!options.continueOnError) {
+            throw workflowResult;
+          }
+
+          return workflowResult;
+        }
+      });
+
+      const batchResults = await Promise.all(batchPromises);
+      results.push(...batchResults);
+    }
+
+    const completedTasks = results.filter(r => !r.error).length;
+    const failedTasks = results.filter(r => r.error).length;
+
+    return {
+      totalTasks: tasks.length,
+      completedTasks,
+      failedTasks,
+      totalExecutionTime: Date.now() - startTime,
+      results,
+      success: failedTasks === 0,
+    };
+  }
+
+  async executeAgentsSequential(
+    tasks: AgentTask[],
+    options: WorkflowOptions = {}
+  ): Promise<WorkflowSummary> {
+    const startTime = Date.now();
+    const results: WorkflowResult[] = [];
+    const timeout = options.timeout || 30000;
+
+    for (const task of tasks) {
+      const taskStartTime = Date.now();
+      try {
+        const result = await Promise.race([
+          this.executeAgent(task.agentName, task.input, task.context),
+          new Promise<never>((_, reject) => 
+            setTimeout(() => reject(new Error('Task timeout')), timeout)
+          )
+        ]);
+
+        results.push({
+          taskName: task.agentName,
+          agentName: task.agentName,
+          result,
+          executionTime: Date.now() - taskStartTime,
+        });
+      } catch (error) {
+        const workflowResult: WorkflowResult = {
+          taskName: task.agentName,
+          agentName: task.agentName,
+          result: {
+            response: '',
+            usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+          },
+          executionTime: Date.now() - taskStartTime,
+          error: error instanceof Error ? error.message : String(error),
+        };
+
+        results.push(workflowResult);
+
+        if (!options.continueOnError) {
+          return {
+            totalTasks: tasks.length,
+            completedTasks: results.filter(r => !r.error).length,
+            failedTasks: results.filter(r => r.error).length,
+            totalExecutionTime: Date.now() - startTime,
+            results,
+            success: false,
+          };
+        }
+      }
+    }
+
+    const completedTasks = results.filter(r => !r.error).length;
+    const failedTasks = results.filter(r => r.error).length;
+
+    return {
+      totalTasks: tasks.length,
+      completedTasks,
+      failedTasks,
+      totalExecutionTime: Date.now() - startTime,
+      results,
+      success: failedTasks === 0,
+    };
+  }
+
+  async executeAgentWorkflow(
+    tasks: AgentTask[],
+    mode: 'parallel' | 'sequential' = 'parallel',
+    options: WorkflowOptions = {}
+  ): Promise<WorkflowSummary> {
+    if (mode === 'parallel') {
+      return await this.executeAgentsParallel(tasks, options);
+    } else {
+      return await this.executeAgentsSequential(tasks, options);
+    }
   }
 }
