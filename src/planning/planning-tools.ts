@@ -2,6 +2,7 @@ import type { ToolDefinition, Plan } from '../types/index';
 import { PlanningService } from './planning-service';
 import type { AIProvider } from '../types/index';
 import type { ToolDefinition as ToolDef } from '../types/core';
+import { z } from 'zod';
 
 interface PlanningToolArgs {
   goal: string;
@@ -31,28 +32,12 @@ export function createPlanningTools(provider: AIProvider, tools: ToolDef[] = [])
     {
       name: 'create_plan',
       description: 'Create a multi-step plan to achieve a goal. Breaks down complex tasks into specific, actionable steps.',
-      parameters: {
-        type: 'object',
-        properties: {
-          goal: {
-            type: 'string',
-            description: 'The goal or task to accomplish',
-          },
-          maxSteps: {
-            type: 'number',
-            description: 'Maximum number of steps in the plan (optional, default 10)',
-          },
-          allowTools: {
-            type: 'boolean',
-            description: 'Whether to allow using tools in the plan (optional, default true)',
-          },
-          requireConfirmation: {
-            type: 'boolean',
-            description: 'Whether to require confirmation before executing (optional, default false)',
-          },
-        },
-        required: ['goal'],
-      },
+      parameters: z.object({
+        goal: z.string().describe('The goal or task to accomplish'),
+        maxSteps: z.number().optional().describe('Maximum number of steps in the plan (optional, default 10)'),
+        allowTools: z.boolean().optional().describe('Whether to allow using tools in the plan (optional, default true)'),
+        requireConfirmation: z.boolean().optional().describe('Whether to require confirmation before executing (optional, default false)'),
+      }),
       execute: async (args: Record<string, unknown>): Promise<string> => {
         const typedArgs = args as unknown as PlanningToolArgs;
         const { goal, maxSteps, allowTools, requireConfirmation } = typedArgs;
@@ -82,20 +67,10 @@ export function createPlanningTools(provider: AIProvider, tools: ToolDef[] = [])
     {
       name: 'execute_plan',
       description: 'Execute a previously created plan. Runs each step in order, handling dependencies and tools.',
-      parameters: {
-        type: 'object',
-        properties: {
-          planId: {
-            type: 'string',
-            description: 'ID of the plan to execute (optional, uses most recent if not provided)',
-          },
-          requireConfirmation: {
-            type: 'boolean',
-            description: 'Whether to pause on failures for confirmation (optional, default false)',
-          },
-        },
-        required: [],
-      },
+      parameters: z.object({
+        planId: z.string().optional().describe('ID of the plan to execute (optional, uses most recent if not provided)'),
+        requireConfirmation: z.boolean().optional().describe('Whether to pause on failures for confirmation (optional, default false)'),
+      }),
       execute: async (args: Record<string, unknown>): Promise<string> => {
         const typedArgs = args as ExecutePlanArgs;
         const { planId, requireConfirmation } = typedArgs;
@@ -144,16 +119,9 @@ export function createPlanningTools(provider: AIProvider, tools: ToolDef[] = [])
     {
       name: 'plan_status',
       description: 'Get the status and details of a plan. Shows current progress and step information.',
-      parameters: {
-        type: 'object',
-        properties: {
-          planId: {
-            type: 'string',
-            description: 'ID of the plan to check (optional, uses most recent if not provided)',
-          },
-        },
-        required: [],
-      },
+      parameters: z.object({
+        planId: z.string().optional().describe('ID of the plan to check (optional, uses most recent if not provided)'),
+      }),
       execute: async (args: Record<string, unknown>): Promise<string> => {
         const typedArgs = args as PlanStatusArgs;
         const { planId } = typedArgs;
@@ -201,11 +169,7 @@ export function createPlanningTools(provider: AIProvider, tools: ToolDef[] = [])
     {
       name: 'list_plans',
       description: 'List all available plans with their status and basic information.',
-      parameters: {
-        type: 'object',
-        properties: {},
-        required: [],
-      },
+      parameters: z.object({}),
       execute: async (): Promise<string> => {
         const plans = Array.from(activePlans.values());
         
