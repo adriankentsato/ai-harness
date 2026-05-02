@@ -75,12 +75,16 @@ export class OpenRouterProvider extends AIProvider {
     });
     const tools = this.buildTools(options.tools);
 
+    // Filter out system messages and use system parameter instead
+    const filteredMessages = messages.filter(m => m.role !== 'system');
+
     const result = await generateText({
       model: openrouter(model),
-      messages: messages.map(m => ({
+      messages: filteredMessages.map(m => ({
         role: m.role,
         content: m.content,
       })),
+      system: options.system,
       temperature: options.temperature,
       maxOutputTokens: options.maxTokens,
       topP: options.topP,
@@ -123,12 +127,16 @@ export class OpenRouterProvider extends AIProvider {
     });
     const tools = this.buildTools(options.tools);
 
+    // Filter out system messages and use system parameter instead
+    const filteredMessages = messages.filter(m => m.role !== 'system');
+
     const result = await streamText({
       model: openrouter(model),
-      messages: messages.map(m => ({
+      messages: filteredMessages.map(m => ({
         role: m.role,
         content: m.content,
       })),
+      system: options.system,
       temperature: options.temperature,
       maxOutputTokens: options.maxTokens,
       topP: options.topP,

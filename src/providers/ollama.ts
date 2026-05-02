@@ -55,12 +55,16 @@ export class OllamaProvider extends AIProvider {
     const ollama = createOllama({ baseURL: `${this.baseUrl}/api` });
     const tools = this.buildTools(options.tools);
 
+    // Filter out system messages and use system parameter instead
+    const filteredMessages = messages.filter(m => m.role !== 'system');
+
     const result = await generateText({
       model: ollama(model) as any,
-      messages: messages.map(m => ({
+      messages: filteredMessages.map(m => ({
         role: m.role,
         content: m.content,
       })),
+      system: options.system,
       temperature: options.temperature,
       maxOutputTokens: options.maxTokens,
       topP: options.topP,
@@ -93,12 +97,16 @@ export class OllamaProvider extends AIProvider {
     const ollama = createOllama({ baseURL: `${this.baseUrl}/api` });
     const tools = this.buildTools(options.tools);
 
+    // Filter out system messages and use system parameter instead
+    const filteredMessages = messages.filter(m => m.role !== 'system');
+
     const result = await streamText({
       model: ollama(model) as any,
-      messages: messages.map(m => ({
+      messages: filteredMessages.map(m => ({
         role: m.role,
         content: m.content,
       })),
+      system: options.system,
       temperature: options.temperature,
       maxOutputTokens: options.maxTokens,
       topP: options.topP,
