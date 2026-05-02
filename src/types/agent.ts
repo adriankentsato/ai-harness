@@ -51,6 +51,7 @@ export abstract class Agent {
       tools,
       maxTokens: this.config.maxTokens,
       temperature: this.config.temperature,
+      system: this.config.systemPrompt,
     });
 
     return {

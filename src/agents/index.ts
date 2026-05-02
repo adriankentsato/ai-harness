@@ -12,9 +12,10 @@ export class BaseAgent extends Agent {
   }
 
   async execute(input: string, context?: AgentContext): Promise<AgentResult> {
+    // Filter out any system messages from context and use system parameter instead
+    const contextMessages = (context?.messages || []).filter(m => m.role !== 'system');
     const messages: Message[] = [
-      ...(this.config.systemPrompt ? [{ role: 'system' as const, content: this.config.systemPrompt }] : []),
-      ...(context?.messages || []),
+      ...contextMessages,
       { role: 'user' as const, content: input }
     ];
 
@@ -27,6 +28,7 @@ export class BaseAgent extends Agent {
         model: this.config.model,
         maxTokens: this.config.maxTokens,
         temperature: this.config.temperature,
+        system: this.config.systemPrompt,
       });
 
       return {
