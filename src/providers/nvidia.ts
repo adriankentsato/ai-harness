@@ -1,9 +1,8 @@
-import { generateText, streamText, tool, type CoreTool } from 'ai';
+import { generateText, streamText } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
-import { z } from 'zod';
-import type { AIProvider, Message, CompletionOptions, CompletionResult, StreamChunk, ModelInfo, ToolDefinition } from '../types/index';
+import { AIProvider, type Message, type CompletionOptions, type CompletionResult, type StreamChunk, type ModelInfo } from '../types/index';
 
-export class NvidiaProvider implements AIProvider {
+export class NvidiaProvider extends AIProvider {
   readonly name = 'nvidia';
   readonly defaultModel = 'meta/llama-3.1-405b-instruct';
 
@@ -12,43 +11,10 @@ export class NvidiaProvider implements AIProvider {
   private timeoutMs: number;
 
   constructor(config: { apiKey: string; baseUrl?: string; timeout?: number }) {
+    super();
     this.baseUrl = config.baseUrl || 'https://integrate.api.nvidia.com/v1';
     this.timeoutMs = config.timeout || 60000;
     this.apiKey = config.apiKey;
-  }
-
-  private buildTools(tools?: ToolDefinition[]): Record<string, CoreTool> | undefined {
-    if (!tools || tools.length === 0) return undefined;
-
-    const result: Record<string, CoreTool> = {};
-    for (const t of tools) {
-      result[t.name] = tool({
-        description: t.description,
-        parameters: z.object(this.convertParams(t.parameters)),
-        execute: t.execute,
-      }) as CoreTool;
-    }
-    return result;
-  }
-
-  private convertParams(params: Record<string, unknown>): Record<string, z.ZodType> {
-    if (!params || typeof params !== 'object') return {};
-
-    const props = (params.properties || {}) as Record<string, { type: string; description?: string }>;
-    const result: Record<string, z.ZodType> = {};
-
-    for (const [key, value] of Object.entries(props)) {
-      if (value.type === 'string') {
-        result[key] = z.string().describe(value.description || '');
-      } else if (value.type === 'number') {
-        result[key] = z.number().describe(value.description || '');
-      } else if (value.type === 'boolean') {
-        result[key] = z.boolean().describe(value.description || '');
-      } else {
-        result[key] = z.any().describe(value.description || '');
-      }
-    }
-    return result;
   }
 
   validateConfig(): boolean {
@@ -103,7 +69,7 @@ export class NvidiaProvider implements AIProvider {
         content: m.content,
       })),
       temperature: options.temperature,
-      maxTokens: options.maxTokens,
+      maxOutputTokens: options.maxTokens,
       topP: options.topP,
       frequencyPenalty: options.frequencyPenalty,
       presencePenalty: options.presencePenalty,
@@ -117,9 +83,9 @@ export class NvidiaProvider implements AIProvider {
     return {
       text: result.text,
       usage: {
-        promptTokens: result.usage.promptTokens,
-        completionTokens: result.usage.completionTokens,
-        totalTokens: result.usage.totalTokens,
+        promptTokens: result.usage.inputTokens || 0,
+        completionTokens: result.usage.outputTokens || 0,
+        totalTokens: result.usage.totalTokens || 0,
       },
       model,
       finishReason: result.finishReason || 'stop',
@@ -147,7 +113,7 @@ export class NvidiaProvider implements AIProvider {
         content: m.content,
       })),
       temperature: options.temperature,
-      maxTokens: options.maxTokens,
+      maxOutputTokens: options.maxTokens,
       topP: options.topP,
       frequencyPenalty: options.frequencyPenalty,
       presencePenalty: options.presencePenalty,
@@ -171,9 +137,9 @@ export class NvidiaProvider implements AIProvider {
       text: '',
       isComplete: true,
       usage: {
-        promptTokens: usage.promptTokens,
-        completionTokens: usage.completionTokens,
-        totalTokens: usage.totalTokens,
+        promptTokens: usage.inputTokens || 0,
+        completionTokens: usage.outputTokens || 0,
+        totalTokens: usage.totalTokens || 0,
       },
     };
   }

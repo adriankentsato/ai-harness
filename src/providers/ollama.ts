@@ -1,9 +1,8 @@
-import { generateText, streamText, tool, type CoreTool } from 'ai';
+import { generateText, streamText } from 'ai';
 import { createOllama } from 'ollama-ai-provider';
-import { z } from 'zod';
-import type { AIProvider, Message, CompletionOptions, CompletionResult, StreamChunk, ModelInfo, ToolDefinition } from '../types/index';
+import { AIProvider, type Message, type CompletionOptions, type CompletionResult, type StreamChunk, type ModelInfo } from '../types/index';
 
-export class OllamaProvider implements AIProvider {
+export class OllamaProvider extends AIProvider {
   readonly name = 'ollama';
   readonly defaultModel = 'llama3.1';
 
@@ -11,42 +10,9 @@ export class OllamaProvider implements AIProvider {
   private timeoutMs: number;
 
   constructor(config: { baseUrl?: string; timeout?: number } = {}) {
+    super();
     this.baseUrl = config.baseUrl || 'http://localhost:11434';
     this.timeoutMs = config.timeout || 60000;
-  }
-
-  private buildTools(tools?: ToolDefinition[]): Record<string, CoreTool> | undefined {
-    if (!tools || tools.length === 0) return undefined;
-
-    const result: Record<string, CoreTool> = {};
-    for (const t of tools) {
-      result[t.name] = tool({
-        description: t.description,
-        parameters: z.object(this.convertParams(t.parameters)),
-        execute: t.execute,
-      }) as CoreTool;
-    }
-    return result;
-  }
-
-  private convertParams(params: Record<string, unknown>): Record<string, z.ZodType> {
-    if (!params || typeof params !== 'object') return {};
-
-    const props = (params.properties || {}) as Record<string, { type: string; description?: string }>;
-    const result: Record<string, z.ZodType> = {};
-
-    for (const [key, value] of Object.entries(props)) {
-      if (value.type === 'string') {
-        result[key] = z.string().describe(value.description || '');
-      } else if (value.type === 'number') {
-        result[key] = z.number().describe(value.description || '');
-      } else if (value.type === 'boolean') {
-        result[key] = z.boolean().describe(value.description || '');
-      } else {
-        result[key] = z.any().describe(value.description || '');
-      }
-    }
-    return result;
   }
 
   validateConfig(): boolean {
@@ -90,13 +56,13 @@ export class OllamaProvider implements AIProvider {
     const tools = this.buildTools(options.tools);
 
     const result = await generateText({
-      model: ollama(model),
+      model: ollama(model) as any,
       messages: messages.map(m => ({
         role: m.role,
         content: m.content,
       })),
       temperature: options.temperature,
-      maxTokens: options.maxTokens,
+      maxOutputTokens: options.maxTokens,
       topP: options.topP,
       tools,
       abortSignal: abortController.signal,
@@ -107,9 +73,9 @@ export class OllamaProvider implements AIProvider {
     return {
       text: result.text,
       usage: {
-        promptTokens: result.usage.promptTokens,
-        completionTokens: result.usage.completionTokens,
-        totalTokens: result.usage.totalTokens,
+        promptTokens: result.usage.inputTokens || 0,
+        completionTokens: result.usage.outputTokens || 0,
+        totalTokens: result.usage.totalTokens || 0,
       },
       model,
       finishReason: result.finishReason || 'stop',
@@ -128,13 +94,13 @@ export class OllamaProvider implements AIProvider {
     const tools = this.buildTools(options.tools);
 
     const result = await streamText({
-      model: ollama(model),
+      model: ollama(model) as any,
       messages: messages.map(m => ({
         role: m.role,
         content: m.content,
       })),
       temperature: options.temperature,
-      maxTokens: options.maxTokens,
+      maxOutputTokens: options.maxTokens,
       topP: options.topP,
       tools,
       abortSignal: abortController.signal,
