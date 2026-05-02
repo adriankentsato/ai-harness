@@ -7,17 +7,16 @@ import { z } from 'zod';
 
 const execAsync = promisify(exec);
 
-export interface RunNpmScriptsArgs {
-  operation: 'list' | 'run' | 'install' | 'test' | 'build' | 'start' | 'dev';
-  script?: string;
-  args?: string[];
-  cwd?: string;
-  timeout?: number;
-}
+const INPUT_ARGS = z.object({
+  operation: z.enum(['list', 'run', 'install', 'test', 'build', 'start', 'dev']).describe('The npm operation to perform'),
+  script: z.string().optional().describe('Script name to run (required for run operation)'),
+  args: z.array(z.string()).optional().describe('Arguments to pass to the npm script'),
+  cwd: z.string().optional().describe('Working directory (default: current directory)'),
+  timeout: z.number().min(5000).max(300000).optional().describe('Timeout in milliseconds (default: 60000)'),
+});
 
-async function executeRunNpmScripts(args: Record<string, unknown>): Promise<string> {
-  const typedArgs = args as unknown as RunNpmScriptsArgs;
-  const { operation, script, args: scriptArgs = [], cwd, timeout = 60000 } = typedArgs;
+async function executeRunNpmScripts(args: z.infer<typeof INPUT_ARGS>): Promise<string> {
+  const { operation, script, args: scriptArgs = [], cwd, timeout = 60000 } = args;
 
   // Validate working directory
   const workingDir = cwd || process.cwd();
@@ -173,15 +172,9 @@ async function executeRunNpmScripts(args: Record<string, unknown>): Promise<stri
   }
 }
 
-export const runNpmScriptsTool: ToolDefinition = {
+export const runNpmScriptsTool: ToolDefinition<z.infer<typeof INPUT_ARGS>, string> = {
   name: 'run_npm_scripts',
   description: 'Execute npm scripts and package management operations with strict working directory restrictions. Supports listing scripts, running custom scripts, install, test, build, start, and dev operations.',
-  parameters: z.object({
-    operation: z.enum(['list', 'run', 'install', 'test', 'build', 'start', 'dev']).describe('The npm operation to perform'),
-    script: z.string().optional().describe('Script name to run (required for run operation)'),
-    args: z.array(z.string()).optional().describe('Arguments to pass to the npm script'),
-    cwd: z.string().optional().describe('Working directory (default: current directory)'),
-    timeout: z.number().min(5000).max(300000).optional().describe('Timeout in milliseconds (default: 60000)'),
-  }),
+  parameters: INPUT_ARGS,
   execute: executeRunNpmScripts,
 };

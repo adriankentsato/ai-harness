@@ -6,20 +6,19 @@ import { z } from 'zod';
 
 const execAsync = promisify(exec);
 
-export interface GitOpsArgs {
-  operation: 'status' | 'log' | 'add' | 'commit' | 'push' | 'pull' | 'branch' | 'checkout' | 'diff' | 'show' | 'init' | 'clone';
-  files?: string[];
-  message?: string;
-  branch?: string;
-  remote?: string;
-  url?: string;
-  count?: number;
-  cwd?: string;
-}
+const INPUT_ARGS = z.object({
+  operation: z.enum(['status', 'log', 'add', 'commit', 'push', 'pull', 'branch', 'checkout', 'diff', 'show', 'init', 'clone']).describe('The Git operation to perform'),
+  files: z.array(z.string()).optional().describe('File paths for operations like add, diff (required for add, optional for diff)'),
+  message: z.string().optional().describe('Commit message (required for commit operation)'),
+  branch: z.string().optional().describe('Branch name for checkout, push, pull operations'),
+  remote: z.string().optional().describe('Remote name for push/pull operations (default: origin)'),
+  url: z.string().optional().describe('Repository URL for clone operation'),
+  count: z.number().min(1).max(50).optional().describe('Number of commits to show in log (default: 10)'),
+  cwd: z.string().optional().describe('Working directory (default: current directory)'),
+});
 
-async function executeGitOps(args: Record<string, unknown>): Promise<string> {
-  const typedArgs = args as unknown as GitOpsArgs;
-  const { operation, files, message, branch, remote, url, count = 10, cwd } = typedArgs;
+async function executeGitOps(args: z.infer<typeof INPUT_ARGS>): Promise<string> {
+  const { operation, files, message, branch, remote, url, count = 10, cwd } = args;
 
   // Validate working directory
   const workingDir = cwd || process.cwd();
@@ -182,18 +181,9 @@ async function executeGitOps(args: Record<string, unknown>): Promise<string> {
   }
 }
 
-export const gitOpsTool: ToolDefinition = {
+export const gitOpsTool: ToolDefinition<z.infer<typeof INPUT_ARGS>, string> = {
   name: 'git_ops',
   description: 'Perform Git operations with strict working directory restrictions. Supports status, log, add, commit, push, pull, branch, checkout, diff, show, init, and clone operations.',
-  parameters: z.object({
-    operation: z.enum(['status', 'log', 'add', 'commit', 'push', 'pull', 'branch', 'checkout', 'diff', 'show', 'init', 'clone']).describe('The Git operation to perform'),
-    files: z.array(z.string()).optional().describe('File paths for operations like add, diff (required for add, optional for diff)'),
-    message: z.string().optional().describe('Commit message (required for commit operation)'),
-    branch: z.string().optional().describe('Branch name for checkout, push, pull operations'),
-    remote: z.string().optional().describe('Remote name for push/pull operations (default: origin)'),
-    url: z.string().optional().describe('Repository URL for clone operation'),
-    count: z.number().min(1).max(50).optional().describe('Number of commits to show in log (default: 10)'),
-    cwd: z.string().optional().describe('Working directory (default: current directory)'),
-  }),
+  parameters: INPUT_ARGS,
   execute: executeGitOps,
 };

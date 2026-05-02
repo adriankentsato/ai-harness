@@ -6,16 +6,15 @@ import { z } from 'zod';
 
 const execAsync = promisify(exec);
 
-export interface ProcessOpsArgs {
-  operation: 'list' | 'kill' | 'info' | 'node_version' | 'npm_version' | 'python_version' | 'system_info';
-  pid?: number;
-  signal?: 'SIGTERM' | 'SIGKILL' | 'SIGINT';
-  cwd?: string;
-}
+const INPUT_ARGS = z.object({
+  operation: z.enum(['list', 'kill', 'info', 'node_version', 'npm_version', 'python_version', 'system_info']).describe('The process operation to perform'),
+  pid: z.number().min(1).max(999999).optional().describe('Process ID for kill/info operations'),
+  signal: z.enum(['SIGTERM', 'SIGKILL', 'SIGINT']).optional().describe('Signal to send for kill operation (default: SIGTERM)'),
+  cwd: z.string().optional().describe('Working directory (default: current directory)'),
+});
 
-async function executeProcessOps(args: Record<string, unknown>): Promise<string> {
-  const typedArgs = args as unknown as ProcessOpsArgs;
-  const { operation, pid, signal = 'SIGTERM', cwd } = typedArgs;
+async function executeProcessOps(args: z.infer<typeof INPUT_ARGS>): Promise<string> {
+  const { operation, pid, signal = 'SIGTERM', cwd } = args;
 
   // Validate working directory
   const workingDir = cwd || process.cwd();
@@ -148,14 +147,9 @@ async function executeProcessOps(args: Record<string, unknown>): Promise<string>
   }
 }
 
-export const processOpsTool: ToolDefinition = {
+export const processOpsTool: ToolDefinition<z.infer<typeof INPUT_ARGS>, string> = {
   name: 'process_ops',
   description: 'Perform safe process operations with strict working directory restrictions. Supports listing processes, killing processes, getting process info, and checking tool versions.',
-  parameters: z.object({
-    operation: z.enum(['list', 'kill', 'info', 'node_version', 'npm_version', 'python_version', 'system_info']).describe('The process operation to perform'),
-    pid: z.number().min(1).max(999999).optional().describe('Process ID for kill/info operations'),
-    signal: z.enum(['SIGTERM', 'SIGKILL', 'SIGINT']).optional().describe('Signal to send for kill operation (default: SIGTERM)'),
-    cwd: z.string().optional().describe('Working directory (default: current directory)'),
-  }),
+  parameters: INPUT_ARGS,
   execute: executeProcessOps,
 };

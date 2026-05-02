@@ -1,42 +1,50 @@
 import type { ToolDefinition } from '../types/index';
 import type { AIHarness } from '../harness';
-import type { ProviderType, AgentConfig, AgentTask, WorkflowOptions } from '../types/index';
+import type { ProviderType, AgentConfig } from '../types/index';
 import { z } from 'zod';
+import { IGenericType } from '../utils/types/generic-type';
 
-export interface CreateAgentArgs {
-  name: string;
-  description?: string;
-  provider: ProviderType;
-  model?: string;
-  systemPrompt?: string;
-  tools?: string[];
-  maxTokens?: number;
-  temperature?: number;
-}
+const CREATE_AGENT_INPUT_ARGS = z.object({
+  name: z.string().describe('Unique name for the agent'),
+  description: z.string().optional().describe('Description of the agent purpose'),
+  provider: z.enum(['openai', 'claude', 'nvidia', 'openrouter', 'ollama', 'google']).describe('AI provider to use'),
+  model: z.string().optional().describe('Model to use (optional, uses provider default)'),
+  systemPrompt: z.string().optional().describe('System prompt for the agent'),
+  tools: z.array(z.string()).optional().describe('List of tool names the agent can use'),
+  maxTokens: z.number().optional().describe('Maximum tokens for agent responses'),
+  temperature: z.number().optional().describe('Temperature for agent responses (0-1)'),
+});
 
-export interface RunAgentWorkflowArgs {
-  tasks: AgentTask[];
-  mode?: 'parallel' | 'sequential';
-  options?: WorkflowOptions;
-}
+const RUN_AGENT_WORKFLOW_INPUT_ARGS = z.object({
+  tasks: z.array(z.object({
+    agentName: z.string(),
+    input: z.string(),
+    context: z.object({
+      messages: z.array(z.object({
+        role: z.enum(['system', 'user', 'assistant']),
+        content: z.string(),
+      })),
+      tools: z.array(z.any()), // ToolDefinition objects
+      metadata: z.record(z.string(), z.unknown()).optional(),
+    }).optional(),
+    dependsOn: z.array(z.string()).optional(),
+  })).describe('Array of tasks with agentName and input'),
+  mode: z.enum(['parallel', 'sequential']).optional().describe('Execution mode (default: parallel)'),
+  options: z.object({
+    maxConcurrency: z.number().optional(),
+    timeout: z.number().optional(),
+    continueOnError: z.boolean().optional(),
+  }).optional().describe('Execution options (maxConcurrency, timeout, continueOnError)'),
+});
 
-export function createAgentWorkflowTools(harness: AIHarness): ToolDefinition[] {
+export function createAgentWorkflowTools(harness: AIHarness): ToolDefinition<IGenericType, IGenericType>[] {
   return [
     {
       name: 'create_agent',
       description: 'Create and register a new agent on-the-fly with a specific provider, model, system prompt, and optional tool access.',
-      parameters: z.object({
-        name: z.string().describe('Unique name for the agent'),
-        description: z.string().optional().describe('Description of the agent purpose'),
-        provider: z.enum(['openai', 'claude', 'nvidia', 'openrouter', 'ollama', 'google']).describe('AI provider to use'),
-        model: z.string().optional().describe('Model to use (optional, uses provider default)'),
-        systemPrompt: z.string().optional().describe('System prompt for the agent'),
-        tools: z.array(z.string()).optional().describe('List of tool names the agent can use'),
-        maxTokens: z.number().optional().describe('Maximum tokens for agent responses'),
-        temperature: z.number().optional().describe('Temperature for agent responses (0-1)'),
-      }),
+      parameters: CREATE_AGENT_INPUT_ARGS,
       execute: async (args: Record<string, unknown>): Promise<string> => {
-        const typedArgs = args as unknown as CreateAgentArgs;
+        const typedArgs = args as z.infer<typeof CREATE_AGENT_INPUT_ARGS>;
         const { name, description, provider, model, systemPrompt, tools, maxTokens, temperature } = typedArgs;
 
         if (!name || typeof name !== 'string') {
@@ -71,21 +79,9 @@ export function createAgentWorkflowTools(harness: AIHarness): ToolDefinition[] {
     {
       name: 'run_agent_workflow',
       description: 'Execute one or more registered agents in parallel or sequential mode with execution time tracking per task.',
-      parameters: z.object({
-        tasks: z.array(z.object({
-          agentName: z.string(),
-          input: z.string(),
-          context: z.record(z.string(), z.unknown()).optional(),
-        })).describe('Array of tasks with agentName and input'),
-        mode: z.enum(['parallel', 'sequential']).optional().describe('Execution mode (default: parallel)'),
-        options: z.object({
-          maxConcurrency: z.number().optional(),
-          timeout: z.number().optional(),
-          continueOnError: z.boolean().optional(),
-        }).optional().describe('Execution options (maxConcurrency, timeout, continueOnError)'),
-      }),
+      parameters: RUN_AGENT_WORKFLOW_INPUT_ARGS,
       execute: async (args: Record<string, unknown>): Promise<string> => {
-        const typedArgs = args as unknown as RunAgentWorkflowArgs;
+        const typedArgs = args as z.infer<typeof RUN_AGENT_WORKFLOW_INPUT_ARGS>;
         const { tasks, mode = 'parallel', options = {} } = typedArgs;
 
         if (!tasks || !Array.isArray(tasks) || tasks.length === 0) {

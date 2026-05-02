@@ -6,15 +6,14 @@ import { z } from 'zod';
 
 const execAsync = promisify(exec);
 
-export interface BashToolArgs {
-  command: string;
-  cwd?: string;
-  timeout?: number;
-}
+const INPUT_ARGS = z.object({
+  command: z.string().describe('The bash command to execute'),
+  cwd: z.string().optional().describe('Working directory for the command (optional)'),
+  timeout: z.number().optional().describe('Timeout in milliseconds (optional, default 30000)'),
+});
 
-async function executeBash(args: Record<string, unknown>): Promise<string> {
-  const typedArgs = args as unknown as BashToolArgs;
-  const { command, cwd, timeout } = typedArgs;
+async function executeBash(args: z.infer<typeof INPUT_ARGS>): Promise<string> {
+  const { command, cwd, timeout } = args;
 
   if (!command || typeof command !== 'string') {
     throw new Error('command is required and must be a string');
@@ -53,13 +52,9 @@ async function executeBash(args: Record<string, unknown>): Promise<string> {
   }
 }
 
-export const bashTool: ToolDefinition = {
+export const bashTool: ToolDefinition<z.infer<typeof INPUT_ARGS>, string> = {
   name: 'bash',
   description: 'Execute a bash command on the local system. Use for file operations, running scripts, checking system info, git commands, etc. The working directory defaults to the current process directory. Timeout defaults to 30 seconds.',
-  parameters: z.object({
-    command: z.string().describe('The bash command to execute'),
-    cwd: z.string().optional().describe('Working directory for the command (optional)'),
-    timeout: z.number().optional().describe('Timeout in milliseconds (optional, default 30000)'),
-  }),
+  parameters: INPUT_ARGS,
   execute: executeBash,
 };

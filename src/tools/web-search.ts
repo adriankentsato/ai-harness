@@ -1,15 +1,15 @@
 import type { ToolDefinition } from '../types/index';
 import { z } from 'zod';
 
-export interface WebSearchArgs {
-  query: string;
-  provider?: 'duckduckgo' | 'brave' | 'searx';
-  limit?: number;
-  safe_search?: 'strict' | 'moderate' | 'off';
-  region?: string;
-  language?: string;
-  time_range?: 'day' | 'week' | 'month' | 'year';
-}
+const INPUT_ARGS = z.object({
+  query: z.string().describe('The search query string'),
+  provider: z.enum(['duckduckgo', 'brave', 'searx']).optional().describe('Search provider to use (default: duckduckgo)'),
+  limit: z.number().min(1).max(50).optional().describe('Maximum number of results to return (default: 10)'),
+  safe_search: z.enum(['strict', 'moderate', 'off']).optional().describe('Safe search level (default: moderate)'),
+  region: z.string().optional().describe('Region/country code for localized results (e.g., us, uk, ca)'),
+  language: z.string().optional().describe('Language code (default: en)'),
+  time_range: z.enum(['day', 'week', 'month', 'year']).optional().describe('Filter results by time period'),
+});
 
 interface SearchResult {
   title: string;
@@ -25,7 +25,7 @@ interface SearchResponse {
   provider: string;
 }
 
-async function searchDuckDuckGo(query: string, options: Partial<WebSearchArgs>): Promise<SearchResponse> {
+async function searchDuckDuckGo(query: string, options: Partial<z.infer<typeof INPUT_ARGS>>): Promise<SearchResponse> {
   const params = new URLSearchParams({
     q: query,
     format: 'json',
@@ -77,7 +77,7 @@ async function searchDuckDuckGo(query: string, options: Partial<WebSearchArgs>):
   }
 }
 
-async function searchBrave(query: string, options: Partial<WebSearchArgs>): Promise<SearchResponse> {
+async function searchBrave(query: string, options: Partial<z.infer<typeof INPUT_ARGS>>): Promise<SearchResponse> {
   const params = new URLSearchParams({
     q: query,
   });
@@ -127,7 +127,7 @@ async function searchBrave(query: string, options: Partial<WebSearchArgs>): Prom
   }
 }
 
-async function searchSearX(query: string, options: Partial<WebSearchArgs>): Promise<SearchResponse> {
+async function searchSearX(query: string, options: Partial<z.infer<typeof INPUT_ARGS>>): Promise<SearchResponse> {
   // Use a public SearX instance
   const baseUrl = 'https://searx.be';
   const params = new URLSearchParams({
@@ -179,8 +179,7 @@ async function searchSearX(query: string, options: Partial<WebSearchArgs>): Prom
   }
 }
 
-async function executeWebSearch(args: Record<string, unknown>): Promise<string> {
-  const typedArgs = args as unknown as WebSearchArgs;
+async function executeWebSearch(args: z.infer<typeof INPUT_ARGS>): Promise<string> {
   const { 
     query, 
     provider = 'duckduckgo', 
@@ -189,7 +188,7 @@ async function executeWebSearch(args: Record<string, unknown>): Promise<string> 
     region,
     language = 'en',
     time_range
-  } = typedArgs;
+  } = args;
 
   if (!query || typeof query !== 'string') {
     throw new Error('query is required and must be a string');
@@ -249,17 +248,9 @@ async function executeWebSearch(args: Record<string, unknown>): Promise<string> 
   }
 }
 
-export const webSearchTool: ToolDefinition = {
+export const webSearchTool: ToolDefinition<z.infer<typeof INPUT_ARGS>, string> = {
   name: 'web_search',
   description: 'Search the web for information using multiple search providers (DuckDuckGo, Brave, SearX). Returns relevant web pages with titles, URLs, and snippets.',
-  parameters: z.object({
-    query: z.string().describe('The search query string'),
-    provider: z.enum(['duckduckgo', 'brave', 'searx']).optional().describe('Search provider to use (default: duckduckgo)'),
-    limit: z.number().min(1).max(50).optional().describe('Maximum number of results to return (default: 10)'),
-    safe_search: z.enum(['strict', 'moderate', 'off']).optional().describe('Safe search level (default: moderate)'),
-    region: z.string().optional().describe('Region/country code for localized results (e.g., us, uk, ca)'),
-    language: z.string().optional().describe('Language code (default: en)'),
-    time_range: z.enum(['day', 'week', 'month', 'year']).optional().describe('Filter results by time period'),
-  }),
+  parameters: INPUT_ARGS,
   execute: executeWebSearch,
 };

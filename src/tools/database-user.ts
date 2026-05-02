@@ -1,19 +1,19 @@
 import Database from 'better-sqlite3';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID as uuidv4 } from 'crypto';
 import crypto from 'crypto';
 import type { ToolDefinition } from '../types/index';
 import { validatePathSecure, SecurityError } from '../utils/security';
 import { z } from 'zod';
 
-export interface DatabaseUserArgs {
-  operation: 'get_user_by_id' | 'get_user_by_email' | 'get_all_users' | 'create_user' | 'update_user' | 'delete_user';
-  id?: string;
-  email?: string;
-  firstName?: string;
-  lastName?: string;
-  password?: string;
-  isActive?: boolean;
-}
+const INPUT_ARGS = z.object({
+  operation: z.enum(['get_user_by_id', 'get_user_by_email', 'get_all_users', 'create_user', 'update_user', 'delete_user']).describe('The operation to perform on user data'),
+  id: z.string().optional().describe('User ID (required for get_user_by_id, update_user, delete_user operations)'),
+  email: z.string().optional().describe('User email (required for get_user_by_email, create_user operations)'),
+  firstName: z.string().optional().describe('User first name (required for create_user, optional for update_user)'),
+  lastName: z.string().optional().describe('User last name (required for create_user, optional for update_user)'),
+  password: z.string().optional().describe('User password (required for create_user, optional for update_user)'),
+  isActive: z.boolean().optional().describe('User active status (optional for update_user)'),
+});
 
 export interface User {
   id: string;
@@ -104,9 +104,8 @@ function mapRowToUser(row: DatabaseUserRow): User {
   };
 }
 
-async function executeDatabaseUser(args: Record<string, unknown>): Promise<string> {
-  const typedArgs = args as unknown as DatabaseUserArgs;
-  const { operation, id, email, firstName, lastName, password, isActive } = typedArgs;
+async function executeDatabaseUser(args: z.infer<typeof INPUT_ARGS>): Promise<string> {
+  const { operation, id, email, firstName, lastName, password, isActive } = args;
 
   // Validate operation
   if (!operation || !['get_user_by_id', 'get_user_by_email', 'get_all_users', 'create_user', 'update_user', 'delete_user'].includes(operation)) {
@@ -290,17 +289,9 @@ export function resetDatabase(): void {
   }
 }
 
-export const databaseUserTool: ToolDefinition = {
+export const databaseUserTool: ToolDefinition<z.infer<typeof INPUT_ARGS>, string> = {
   name: 'database_user',
   description: 'Connect to a SQLite database and perform user information operations (create, read, update, delete users)',
-  parameters: z.object({
-    operation: z.enum(['get_user_by_id', 'get_user_by_email', 'get_all_users', 'create_user', 'update_user', 'delete_user']).describe('The operation to perform on user data'),
-    id: z.string().optional().describe('User ID (required for get_user_by_id, update_user, delete_user operations)'),
-    email: z.string().optional().describe('User email (required for get_user_by_email, create_user operations)'),
-    firstName: z.string().optional().describe('User first name (required for create_user, optional for update_user)'),
-    lastName: z.string().optional().describe('User last name (required for create_user, optional for update_user)'),
-    password: z.string().optional().describe('User password (required for create_user, optional for update_user)'),
-    isActive: z.boolean().optional().describe('User active status (optional for update_user)'),
-  }),
+  parameters: INPUT_ARGS,
   execute: executeDatabaseUser,
 };
