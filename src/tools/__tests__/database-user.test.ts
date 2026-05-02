@@ -28,13 +28,13 @@ describe('databaseUserTool', () => {
 
   it('should validate required operation parameter', async () => {
     await expect(
-      databaseUserTool.execute({})
+      databaseUserTool.execute({} as any)
     ).rejects.toThrow('operation is required and must be one of: get_user_by_id, get_user_by_email, get_all_users, create_user, update_user, delete_user');
   });
 
   it('should validate invalid operation', async () => {
     await expect(
-      databaseUserTool.execute({ operation: 'invalid_op' })
+      databaseUserTool.execute({ operation: 'invalid_op' } as any)
     ).rejects.toThrow('operation is required and must be one of: get_user_by_id, get_user_by_email, get_all_users, create_user, update_user, delete_user');
   });
 
@@ -65,7 +65,7 @@ describe('databaseUserTool', () => {
         lastName: 'Doe',
         email: 'john.doe@example.com',
         password: 'password123'
-      })
+      } as any)
     ).rejects.toThrow('firstName is required and must be a string for create_user operation');
   });
 
@@ -76,7 +76,7 @@ describe('databaseUserTool', () => {
         firstName: 'John',
         email: 'john.doe@example.com',
         password: 'password123'
-      })
+      } as any)
     ).rejects.toThrow('lastName is required and must be a string for create_user operation');
   });
 
@@ -87,7 +87,7 @@ describe('databaseUserTool', () => {
         firstName: 'John',
         lastName: 'Doe',
         password: 'password123'
-      })
+      } as any)
     ).rejects.toThrow('email is required and must be a string for create_user operation');
   });
 
@@ -98,7 +98,7 @@ describe('databaseUserTool', () => {
         firstName: 'John',
         lastName: 'Doe',
         email: 'john.doe@example.com'
-      })
+      } as any)
     ).rejects.toThrow('password is required and must be a string for create_user operation');
   });
 
@@ -120,7 +120,7 @@ describe('databaseUserTool', () => {
         lastName: 'Smith',
         email: 'john.doe@example.com',
         password: 'password456'
-      })
+      } as any)
     ).rejects.toThrow("User with email 'john.doe@example.com' already exists");
   });
 
@@ -158,7 +158,7 @@ describe('databaseUserTool', () => {
 
   it('should require ID for get_user_by_id', async () => {
     await expect(
-      databaseUserTool.execute({ operation: 'get_user_by_id' })
+      databaseUserTool.execute({ operation: 'get_user_by_id' } as any)
     ).rejects.toThrow('id is required and must be a string for get_user_by_id operation');
   });
 
@@ -194,7 +194,7 @@ describe('databaseUserTool', () => {
 
   it('should require email for get_user_by_email', async () => {
     await expect(
-      databaseUserTool.execute({ operation: 'get_user_by_email' })
+      databaseUserTool.execute({ operation: 'get_user_by_email' } as any)
     ).rejects.toThrow('email is required and must be a string for get_user_by_email operation');
   });
 
@@ -264,7 +264,7 @@ describe('databaseUserTool', () => {
 
   it('should require ID for update_user', async () => {
     await expect(
-      databaseUserTool.execute({ operation: 'update_user' })
+      databaseUserTool.execute({ operation: 'update_user' } as any)
     ).rejects.toThrow('id is required and must be a string for update_user operation');
   });
 
@@ -274,7 +274,7 @@ describe('databaseUserTool', () => {
         operation: 'update_user',
         id: 'non-existent-id',
         firstName: 'John'
-      })
+      } as any)
     ).rejects.toThrow("User with id 'non-existent-id' not found");
   });
 
@@ -312,7 +312,7 @@ describe('databaseUserTool', () => {
       databaseUserTool.execute({
         operation: 'update_user',
         id: createdUser.id,
-        firstName: 123
+        firstName: 123 as any
       })
     ).rejects.toThrow('firstName must be a string');
 
@@ -320,7 +320,7 @@ describe('databaseUserTool', () => {
       databaseUserTool.execute({
         operation: 'update_user',
         id: createdUser.id,
-        isActive: 'not-boolean'
+        isActive: 'not-boolean' as any
       })
     ).rejects.toThrow('isActive must be a boolean');
   });
@@ -381,7 +381,7 @@ describe('databaseUserTool', () => {
     await expect(
       databaseUserTool.execute({
         operation: 'create_user',
-        firstName: 123,
+        firstName: 123 as any,
         lastName: 'Doe',
         email: 'john.doe@example.com',
         password: 'password123'
@@ -392,7 +392,7 @@ describe('databaseUserTool', () => {
       databaseUserTool.execute({
         operation: 'create_user',
         firstName: 'John',
-        lastName: [],
+        lastName: [] as any,
         email: 'john.doe@example.com',
         password: 'password123'
       })

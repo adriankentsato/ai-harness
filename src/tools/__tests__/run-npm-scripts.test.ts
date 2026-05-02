@@ -204,7 +204,7 @@ describe('runNpmScriptsTool', () => {
 
   it('should reject invalid operation', async () => {
     await expect(runNpmScriptsTool.execute({
-      operation: 'invalid' as string,
+      operation: 'invalid' as any,
       cwd: './test-dir'
     })).rejects.toThrow('Unknown npm operation: invalid');
   });

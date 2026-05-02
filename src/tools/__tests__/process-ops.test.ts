@@ -72,7 +72,7 @@ describe('processOpsTool', () => {
 
   it('should reject invalid operation', async () => {
     await expect(processOpsTool.execute({
-      operation: 'invalid' as string
+      operation: 'invalid' as any
     })).rejects.toThrow('Unknown process operation');
   });
 });

@@ -6,7 +6,7 @@ import { z } from 'zod';
 describe('PlanningService', () => {
   let mockProvider: AIProvider;
   let planningService: PlanningService;
-  let mockTools: ToolDefinition[];
+  let mockTools: ToolDefinition<any, any>[];
 
   beforeEach(() => {
     mockProvider = {

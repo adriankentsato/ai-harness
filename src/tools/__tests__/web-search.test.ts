@@ -12,7 +12,7 @@ describe('webSearchTool', () => {
 
   it('should validate required query parameter', async () => {
     await expect(
-      webSearchTool.execute({})
+      webSearchTool.execute({} as any)
     ).rejects.toThrow('query is required and must be a string');
   });
 
@@ -171,7 +171,7 @@ describe('webSearchTool', () => {
 
   it('should handle unknown provider', async () => {
     await expect(
-      webSearchTool.execute({ query: 'test', provider: 'unknown' as string })
+      webSearchTool.execute({ query: 'test', provider: 'unknown' as any })
     ).rejects.toThrow('Unknown search provider: unknown');
   });
 
