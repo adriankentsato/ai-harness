@@ -84,13 +84,13 @@ describe('Agent System', () => {
       expect(mockHarness.complete).toHaveBeenCalledWith(
         'openai',
         [
-          { role: 'system', content: 'You are a helpful assistant.' },
           { role: 'user', content: 'Test input' }
         ],
         {
           model: 'gpt-4',
           maxTokens: 1000,
           temperature: 0.7,
+          system: 'You are a helpful assistant.',
         }
       );
     });
