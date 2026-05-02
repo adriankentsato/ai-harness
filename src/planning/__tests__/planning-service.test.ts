@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { PlanningService } from '../planning-service';
 import type { AIProvider, Plan, ToolDefinition } from '../../types/index';
+import { z } from 'zod';
 
 describe('PlanningService', () => {
   let mockProvider: AIProvider;
@@ -21,13 +22,9 @@ describe('PlanningService', () => {
       {
         name: 'bash',
         description: 'Execute bash commands',
-        parameters: {
-          type: 'object',
-          properties: {
-            command: { type: 'string' },
-          },
-          required: ['command'],
-        },
+        parameters: z.object({
+          command: z.string(),
+        }),
         execute: vi.fn(),
       },
     ];
