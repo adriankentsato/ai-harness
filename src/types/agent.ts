@@ -1,5 +1,6 @@
 import { Message, ToolDefinition, ToolCall, ProviderType } from './core';
 import type { AIHarness } from '../harness';
+import { IGenericType } from '../utils/types/generic-type';
 
 export interface AgentConfig {
   name: string;
@@ -14,7 +15,7 @@ export interface AgentConfig {
 
 export interface AgentContext {
   messages: Message[];
-  tools: ToolDefinition[];
+  tools: ToolDefinition<IGenericType, IGenericType>[];
   metadata?: Record<string, unknown>;
 }
 
@@ -44,7 +45,7 @@ export abstract class Agent {
 
   protected async executeWithTools(
     messages: Message[],
-    tools: ToolDefinition[]
+    tools: ToolDefinition<IGenericType, IGenericType>[]
   ): Promise<AgentResult> {
     const result = await this.harness.complete(this.config.provider, messages, {
       model: this.config.model,
