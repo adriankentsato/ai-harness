@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { AIHarness } from '../../harness';
 import { BaseAgent, createAgent } from '../index';
 import type { AgentConfig, AgentContext } from '../../types/index';
+import { z } from 'zod';
 
 // Mock the AIHarness
 vi.mock('../../harness');
@@ -111,7 +112,7 @@ describe('Agent System', () => {
           {
             name: 'test-tool',
             description: 'A test tool',
-            parameters: {},
+            parameters: z.object({}),
             execute: vi.fn(),
           }
         ],
