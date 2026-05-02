@@ -25,6 +25,7 @@ export interface CompletionOptions {
   presencePenalty?: number;
   stop?: string[];
   tools?: ToolDefinition[];
+  system?: string;
 }
 
 export interface ToolDefinition {
