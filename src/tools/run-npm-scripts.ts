@@ -3,6 +3,7 @@ import { promisify } from 'util';
 import { readFile } from 'fs/promises';
 import type { ToolDefinition } from '../types/index';
 import { validatePathSecure, SecurityError } from '../utils/security';
+import { z } from 'zod';
 
 const execAsync = promisify(exec);
 
@@ -175,35 +176,12 @@ async function executeRunNpmScripts(args: Record<string, unknown>): Promise<stri
 export const runNpmScriptsTool: ToolDefinition = {
   name: 'run_npm_scripts',
   description: 'Execute npm scripts and package management operations with strict working directory restrictions. Supports listing scripts, running custom scripts, install, test, build, start, and dev operations.',
-  parameters: {
-    type: 'object',
-    properties: {
-      operation: {
-        type: 'string',
-        enum: ['list', 'run', 'install', 'test', 'build', 'start', 'dev'],
-        description: 'The npm operation to perform',
-      },
-      script: {
-        type: 'string',
-        description: 'Script name to run (required for run operation)',
-      },
-      args: {
-        type: 'array',
-        items: { type: 'string' },
-        description: 'Arguments to pass to the npm script',
-      },
-      cwd: {
-        type: 'string',
-        description: 'Working directory (default: current directory)',
-      },
-      timeout: {
-        type: 'number',
-        minimum: 5000,
-        maximum: 300000,
-        description: 'Timeout in milliseconds (default: 60000)',
-      },
-    },
-    required: ['operation'],
-  },
+  parameters: z.object({
+    operation: z.enum(['list', 'run', 'install', 'test', 'build', 'start', 'dev']).describe('The npm operation to perform'),
+    script: z.string().optional().describe('Script name to run (required for run operation)'),
+    args: z.array(z.string()).optional().describe('Arguments to pass to the npm script'),
+    cwd: z.string().optional().describe('Working directory (default: current directory)'),
+    timeout: z.number().min(5000).max(300000).optional().describe('Timeout in milliseconds (default: 60000)'),
+  }),
   execute: executeRunNpmScripts,
 };

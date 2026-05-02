@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
 import type { ToolDefinition } from '../types/index';
 import { validatePathSecure, SecurityError } from '../utils/security';
+import { z } from 'zod';
 
 export interface DatabaseUserArgs {
   operation: 'get_user_by_id' | 'get_user_by_email' | 'get_all_users' | 'create_user' | 'update_user' | 'delete_user';
@@ -292,40 +293,14 @@ export function resetDatabase(): void {
 export const databaseUserTool: ToolDefinition = {
   name: 'database_user',
   description: 'Connect to a SQLite database and perform user information operations (create, read, update, delete users)',
-  parameters: {
-    type: 'object',
-    properties: {
-      operation: {
-        type: 'string',
-        enum: ['get_user_by_id', 'get_user_by_email', 'get_all_users', 'create_user', 'update_user', 'delete_user'],
-        description: 'The operation to perform on user data',
-      },
-      id: {
-        type: 'string',
-        description: 'User ID (required for get_user_by_id, update_user, delete_user operations)',
-      },
-      email: {
-        type: 'string',
-        description: 'User email (required for get_user_by_email, create_user operations)',
-      },
-      firstName: {
-        type: 'string',
-        description: 'User first name (required for create_user, optional for update_user)',
-      },
-      lastName: {
-        type: 'string',
-        description: 'User last name (required for create_user, optional for update_user)',
-      },
-      password: {
-        type: 'string',
-        description: 'User password (required for create_user, optional for update_user)',
-      },
-      isActive: {
-        type: 'boolean',
-        description: 'User active status (optional for update_user)',
-      },
-    },
-    required: ['operation'],
-  },
+  parameters: z.object({
+    operation: z.enum(['get_user_by_id', 'get_user_by_email', 'get_all_users', 'create_user', 'update_user', 'delete_user']).describe('The operation to perform on user data'),
+    id: z.string().optional().describe('User ID (required for get_user_by_id, update_user, delete_user operations)'),
+    email: z.string().optional().describe('User email (required for get_user_by_email, create_user operations)'),
+    firstName: z.string().optional().describe('User first name (required for create_user, optional for update_user)'),
+    lastName: z.string().optional().describe('User last name (required for create_user, optional for update_user)'),
+    password: z.string().optional().describe('User password (required for create_user, optional for update_user)'),
+    isActive: z.boolean().optional().describe('User active status (optional for update_user)'),
+  }),
   execute: executeDatabaseUser,
 };

@@ -1,4 +1,5 @@
 import type { ToolDefinition } from '../types/index';
+import { z } from 'zod';
 
 export interface WebSearchArgs {
   query: string;
@@ -251,44 +252,14 @@ async function executeWebSearch(args: Record<string, unknown>): Promise<string> 
 export const webSearchTool: ToolDefinition = {
   name: 'web_search',
   description: 'Search the web for information using multiple search providers (DuckDuckGo, Brave, SearX). Returns relevant web pages with titles, URLs, and snippets.',
-  parameters: {
-    type: 'object',
-    properties: {
-      query: {
-        type: 'string',
-        description: 'The search query string',
-      },
-      provider: {
-        type: 'string',
-        enum: ['duckduckgo', 'brave', 'searx'],
-        description: 'Search provider to use (default: duckduckgo)',
-      },
-      limit: {
-        type: 'number',
-        minimum: 1,
-        maximum: 50,
-        description: 'Maximum number of results to return (default: 10)',
-      },
-      safe_search: {
-        type: 'string',
-        enum: ['strict', 'moderate', 'off'],
-        description: 'Safe search level (default: moderate)',
-      },
-      region: {
-        type: 'string',
-        description: 'Region/country code for localized results (e.g., us, uk, ca)',
-      },
-      language: {
-        type: 'string',
-        description: 'Language code (default: en)',
-      },
-      time_range: {
-        type: 'string',
-        enum: ['day', 'week', 'month', 'year'],
-        description: 'Filter results by time period',
-      },
-    },
-    required: ['query'],
-  },
+  parameters: z.object({
+    query: z.string().describe('The search query string'),
+    provider: z.enum(['duckduckgo', 'brave', 'searx']).optional().describe('Search provider to use (default: duckduckgo)'),
+    limit: z.number().min(1).max(50).optional().describe('Maximum number of results to return (default: 10)'),
+    safe_search: z.enum(['strict', 'moderate', 'off']).optional().describe('Safe search level (default: moderate)'),
+    region: z.string().optional().describe('Region/country code for localized results (e.g., us, uk, ca)'),
+    language: z.string().optional().describe('Language code (default: en)'),
+    time_range: z.enum(['day', 'week', 'month', 'year']).optional().describe('Filter results by time period'),
+  }),
   execute: executeWebSearch,
 };

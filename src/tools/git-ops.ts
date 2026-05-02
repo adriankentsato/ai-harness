@@ -2,6 +2,7 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import type { ToolDefinition } from '../types/index';
 import { validatePathSecure, SecurityError } from '../utils/security';
+import { z } from 'zod';
 
 const execAsync = promisify(exec);
 
@@ -184,47 +185,15 @@ async function executeGitOps(args: Record<string, unknown>): Promise<string> {
 export const gitOpsTool: ToolDefinition = {
   name: 'git_ops',
   description: 'Perform Git operations with strict working directory restrictions. Supports status, log, add, commit, push, pull, branch, checkout, diff, show, init, and clone operations.',
-  parameters: {
-    type: 'object',
-    properties: {
-      operation: {
-        type: 'string',
-        enum: ['status', 'log', 'add', 'commit', 'push', 'pull', 'branch', 'checkout', 'diff', 'show', 'init', 'clone'],
-        description: 'The Git operation to perform',
-      },
-      files: {
-        type: 'array',
-        items: { type: 'string' },
-        description: 'File paths for operations like add, diff (required for add, optional for diff)',
-      },
-      message: {
-        type: 'string',
-        description: 'Commit message (required for commit operation)',
-      },
-      branch: {
-        type: 'string',
-        description: 'Branch name for checkout, push, pull operations',
-      },
-      remote: {
-        type: 'string',
-        description: 'Remote name for push/pull operations (default: origin)',
-      },
-      url: {
-        type: 'string',
-        description: 'Repository URL for clone operation',
-      },
-      count: {
-        type: 'number',
-        minimum: 1,
-        maximum: 50,
-        description: 'Number of commits to show in log (default: 10)',
-      },
-      cwd: {
-        type: 'string',
-        description: 'Working directory (default: current directory)',
-      },
-    },
-    required: ['operation'],
-  },
+  parameters: z.object({
+    operation: z.enum(['status', 'log', 'add', 'commit', 'push', 'pull', 'branch', 'checkout', 'diff', 'show', 'init', 'clone']).describe('The Git operation to perform'),
+    files: z.array(z.string()).optional().describe('File paths for operations like add, diff (required for add, optional for diff)'),
+    message: z.string().optional().describe('Commit message (required for commit operation)'),
+    branch: z.string().optional().describe('Branch name for checkout, push, pull operations'),
+    remote: z.string().optional().describe('Remote name for push/pull operations (default: origin)'),
+    url: z.string().optional().describe('Repository URL for clone operation'),
+    count: z.number().min(1).max(50).optional().describe('Number of commits to show in log (default: 10)'),
+    cwd: z.string().optional().describe('Working directory (default: current directory)'),
+  }),
   execute: executeGitOps,
 };

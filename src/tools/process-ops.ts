@@ -2,6 +2,7 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import type { ToolDefinition } from '../types/index';
 import { validatePathSecure, SecurityError } from '../utils/security';
+import { z } from 'zod';
 
 const execAsync = promisify(exec);
 
@@ -150,31 +151,11 @@ async function executeProcessOps(args: Record<string, unknown>): Promise<string>
 export const processOpsTool: ToolDefinition = {
   name: 'process_ops',
   description: 'Perform safe process operations with strict working directory restrictions. Supports listing processes, killing processes, getting process info, and checking tool versions.',
-  parameters: {
-    type: 'object',
-    properties: {
-      operation: {
-        type: 'string',
-        enum: ['list', 'kill', 'info', 'node_version', 'npm_version', 'python_version', 'system_info'],
-        description: 'The process operation to perform',
-      },
-      pid: {
-        type: 'number',
-        minimum: 1,
-        maximum: 999999,
-        description: 'Process ID for kill/info operations',
-      },
-      signal: {
-        type: 'string',
-        enum: ['SIGTERM', 'SIGKILL', 'SIGINT'],
-        description: 'Signal to send for kill operation (default: SIGTERM)',
-      },
-      cwd: {
-        type: 'string',
-        description: 'Working directory (default: current directory)',
-      },
-    },
-    required: ['operation'],
-  },
+  parameters: z.object({
+    operation: z.enum(['list', 'kill', 'info', 'node_version', 'npm_version', 'python_version', 'system_info']).describe('The process operation to perform'),
+    pid: z.number().min(1).max(999999).optional().describe('Process ID for kill/info operations'),
+    signal: z.enum(['SIGTERM', 'SIGKILL', 'SIGINT']).optional().describe('Signal to send for kill operation (default: SIGTERM)'),
+    cwd: z.string().optional().describe('Working directory (default: current directory)'),
+  }),
   execute: executeProcessOps,
 };

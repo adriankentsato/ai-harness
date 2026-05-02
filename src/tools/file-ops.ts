@@ -3,6 +3,7 @@ import { resolve, dirname } from 'path';
 import { existsSync } from 'fs';
 import type { ToolDefinition } from '../types/index';
 import { validatePathSecure, validateFileSizeSecure, SecurityError } from '../utils/security';
+import { z } from 'zod';
 
 export interface FileOpsArgs {
   operation: 'read' | 'write' | 'append' | 'copy' | 'move' | 'delete' | 'create_dir' | 'list_dir' | 'stat' | 'exists';
@@ -164,37 +165,13 @@ Accessed: ${accessed}`;
 export const fileOpsTool: ToolDefinition = {
   name: 'file_ops',
   description: 'Perform native file system operations including read, write, append, copy, move, delete, create directories, list directory contents, get file stats, and check if paths exist.',
-  parameters: {
-    type: 'object',
-    properties: {
-      operation: {
-        type: 'string',
-        enum: ['read', 'write', 'append', 'copy', 'move', 'delete', 'create_dir', 'list_dir', 'stat', 'exists'],
-        description: 'The file operation to perform',
-      },
-      path: {
-        type: 'string',
-        description: 'The file or directory path to operate on',
-      },
-      content: {
-        type: 'string',
-        description: 'Content to write or append (required for write/append operations)',
-      },
-      destination: {
-        type: 'string',
-        description: 'Destination path for copy/move operations',
-      },
-      encoding: {
-        type: 'string',
-        enum: ['utf8', 'ascii', 'utf16le', 'ucs2', 'base64', 'latin1', 'binary', 'hex'],
-        description: 'File encoding (default: utf8)',
-      },
-      create_path: {
-        type: 'boolean',
-        description: 'Create parent directories if they don\'t exist (default: false)',
-      },
-    },
-    required: ['operation', 'path'],
-  },
+  parameters: z.object({
+    operation: z.enum(['read', 'write', 'append', 'copy', 'move', 'delete', 'create_dir', 'list_dir', 'stat', 'exists']).describe('The file operation to perform'),
+    path: z.string().describe('The file or directory path to operate on'),
+    content: z.string().optional().describe('Content to write or append (required for write/append operations)'),
+    destination: z.string().optional().describe('Destination path for copy/move operations'),
+    encoding: z.enum(['utf8', 'ascii', 'utf16le', 'ucs2', 'base64', 'latin1', 'binary', 'hex']).optional().describe('File encoding (default: utf8)'),
+    create_path: z.boolean().optional().describe('Create parent directories if they don\'t exist (default: false)'),
+  }),
   execute: executeFileOps,
 };

@@ -2,6 +2,7 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import type { ToolDefinition } from '../types/index';
 import { validateCommandSecure, SecurityError } from '../utils/security';
+import { z } from 'zod';
 
 const execAsync = promisify(exec);
 
@@ -55,23 +56,10 @@ async function executeBash(args: Record<string, unknown>): Promise<string> {
 export const bashTool: ToolDefinition = {
   name: 'bash',
   description: 'Execute a bash command on the local system. Use for file operations, running scripts, checking system info, git commands, etc. The working directory defaults to the current process directory. Timeout defaults to 30 seconds.',
-  parameters: {
-    type: 'object',
-    properties: {
-      command: {
-        type: 'string',
-        description: 'The bash command to execute',
-      },
-      cwd: {
-        type: 'string',
-        description: 'Working directory for the command (optional)',
-      },
-      timeout: {
-        type: 'number',
-        description: 'Timeout in milliseconds (optional, default 30000)',
-      },
-    },
-    required: ['command'],
-  },
+  parameters: z.object({
+    command: z.string().describe('The bash command to execute'),
+    cwd: z.string().optional().describe('Working directory for the command (optional)'),
+    timeout: z.number().optional().describe('Timeout in milliseconds (optional, default 30000)'),
+  }),
   execute: executeBash,
 };
