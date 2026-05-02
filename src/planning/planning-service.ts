@@ -6,11 +6,12 @@ import type {
   AIProvider,
   ToolDefinition,
 } from '../types/index';
+import { IGenericType } from '../utils/types/generic-type';
 
 export class PlanningService {
-  private tools: Map<string, ToolDefinition> = new Map();
+  private tools: Map<string, ToolDefinition<IGenericType, IGenericType>> = new Map();
 
-  constructor(private provider: AIProvider, tools: ToolDefinition[] = []) {
+  constructor(private provider: AIProvider, tools: ToolDefinition<IGenericType, IGenericType>[] = []) {
     for (const tool of tools) {
       this.tools.set(tool.name, tool);
     }
