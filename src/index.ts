@@ -39,4 +39,3 @@ export type {
   WorkflowSummary,
   WorkflowOptions,
 } from './types/index';
-export type { BashToolArgs } from './tools/bash';
