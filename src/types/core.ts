@@ -1,5 +1,6 @@
-import { ZodType } from "zod";
-import { tool, type Tool } from 'ai';
+import { tool, ToolSet } from 'ai';
+import { z } from 'zod';
+import { IGenericType } from '../utils/types/generic-type';
 
 export interface Message {
   role: 'system' | 'user' | 'assistant';
@@ -24,15 +25,15 @@ export interface CompletionOptions {
   frequencyPenalty?: number;
   presencePenalty?: number;
   stop?: string[];
-  tools?: ToolDefinition[];
+  tools?: ToolDefinition<IGenericType, IGenericType>[];
   system?: string;
 }
 
-export interface ToolDefinition {
+export interface ToolDefinition<INPUT, OUTPUT> {
   name: string;
   description: string;
-  parameters: ZodType<any>;
-  execute: (args: Record<string, unknown>) => Promise<string>;
+  parameters: z.ZodTypeAny;
+  execute: (args: INPUT) => Promise<OUTPUT>;
 }
 
 export interface ToolCall {
@@ -88,18 +89,19 @@ export abstract class AIProvider {
 
   abstract fetchModels(): Promise<ModelInfo[]>;
 
-  protected buildTools(tools?: ToolDefinition[]): Record<string, Tool> | undefined {
+  protected buildTools(tools?: ToolDefinition<IGenericType, IGenericType>[]): ToolSet | undefined {
     if (!tools || tools.length === 0) return undefined;
 
-    const result: Record<string, Tool> = {};
-    for (const t of tools) {
-      result[t.name] = tool({
+    // Return tool definitions directly to avoid type recursion
+    // The providers will handle tool creation
+    return tools.reduce((acc, t) => {
+      acc[t.name] = tool({
         description: t.description,
-        inputSchema: t.parameters,
+        inputSchema: t.parameters as IGenericType,
         execute: t.execute,
       });
-    }
-    return result;
+      return acc;
+    }, {} as ToolSet);
   }
 }
 
