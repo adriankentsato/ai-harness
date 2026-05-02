@@ -1,6 +1,7 @@
 import { generateText, streamText } from 'ai';
 import { createOllama } from 'ollama-ai-provider';
 import { AIProvider, type Message, type CompletionOptions, type CompletionResult, type StreamChunk, type ModelInfo } from '../types/index';
+import { IGenericType } from '../utils/types/generic-type';
 
 export class OllamaProvider extends AIProvider {
   readonly name = 'ollama';
@@ -59,7 +60,7 @@ export class OllamaProvider extends AIProvider {
     const filteredMessages = messages.filter(m => m.role !== 'system');
 
     const result = await generateText({
-      model: ollama(model) as any,
+      model: ollama(model) as IGenericType,
       messages: filteredMessages.map(m => ({
         role: m.role,
         content: m.content,
@@ -101,7 +102,7 @@ export class OllamaProvider extends AIProvider {
     const filteredMessages = messages.filter(m => m.role !== 'system');
 
     const result = await streamText({
-      model: ollama(model) as any,
+      model: ollama(model) as IGenericType,
       messages: filteredMessages.map(m => ({
         role: m.role,
         content: m.content,
