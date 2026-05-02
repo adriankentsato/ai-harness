@@ -1,3 +1,6 @@
+import { ZodType } from "zod";
+import { tool, type Tool } from 'ai';
+
 export interface Message {
   role: 'system' | 'user' | 'assistant';
   content: string;
@@ -27,7 +30,7 @@ export interface CompletionOptions {
 export interface ToolDefinition {
   name: string;
   description: string;
-  parameters: Record<string, unknown>;
+  parameters: ZodType<any>;
   execute: (args: Record<string, unknown>) => Promise<string>;
 }
 
@@ -83,6 +86,20 @@ export abstract class AIProvider {
   abstract validateConfig(): boolean;
 
   abstract fetchModels(): Promise<ModelInfo[]>;
+
+  protected buildTools(tools?: ToolDefinition[]): Record<string, Tool> | undefined {
+    if (!tools || tools.length === 0) return undefined;
+
+    const result: Record<string, Tool> = {};
+    for (const t of tools) {
+      result[t.name] = tool({
+        description: t.description,
+        inputSchema: t.parameters,
+        execute: t.execute,
+      });
+    }
+    return result;
+  }
 }
 
 export type ProviderType = 'openai' | 'claude' | 'nvidia' | 'openrouter' | 'ollama' | 'google';
