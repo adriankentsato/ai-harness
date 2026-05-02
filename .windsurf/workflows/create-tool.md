@@ -91,7 +91,7 @@ Update `src/tools/index.ts`:
 import { [toolName]Tool } from './[tool-name].js';
 
 // Add to availableTools array
-export const availableTools: ToolDefinition[] = [
+export const availableTools: ToolDefinition<any, any>[] = [
   bashTool,
   fileOpsTool,
   webSearchTool,
