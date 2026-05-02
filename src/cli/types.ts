@@ -1,11 +1,12 @@
 import type { Message, ProviderType, ToolDefinition } from '../types/index';
 import type { AIHarness } from '../harness';
 import type { ReadLine } from 'readline';
+import { IGenericType } from '../utils/types/generic-type';
 
 export interface CliState {
   currentProvider: ProviderType | null;
   currentModel: string | undefined;
-  enabledTools: ToolDefinition[];
+  enabledTools: ToolDefinition<IGenericType, IGenericType>[];
   messages: Message[];
 }
 
@@ -13,7 +14,7 @@ export interface CliContext {
   harness: AIHarness;
   state: CliState;
   rl: ReadLine;
-  agentWorkflowTools: ToolDefinition[];
+  agentWorkflowTools: ToolDefinition<IGenericType, IGenericType>[];
   registered: ProviderType[];
   missing: Array<{ provider: ProviderType; reason: string }>;
   providers: ProviderType[];
