@@ -17,5 +17,4 @@ export function handleProvider(context: CliContext, args: string[]): void {
       console.log(`Unknown provider: ${newProvider}\n`);
     }
   }
-  rl.prompt();
 }

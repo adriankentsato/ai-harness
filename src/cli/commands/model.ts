@@ -21,5 +21,4 @@ export function handleModel(context: CliContext, args: string[]): void {
     updatePrompt();
     console.log(`Switched to model: ${state.currentModel}\n`);
   }
-  rl.prompt();
 }
