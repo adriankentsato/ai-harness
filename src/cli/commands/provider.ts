@@ -2,7 +2,7 @@ import type { ProviderType } from '../../types/index';
 import type { CliContext } from '../types';
 
 export function handleProvider(context: CliContext, args: string[]): void {
-  const { state, rl, harness, providers } = context;
+  const { state, harness, providers } = context;
 
   if (args.length === 0) {
     console.log(`\nCurrent: ${state.currentProvider || 'none'}`);
