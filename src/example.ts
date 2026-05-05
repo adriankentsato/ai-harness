@@ -1,4 +1,11 @@
 import { AIHarness } from './harness';
+import {
+  OpenAIProvider,
+  ClaudeProvider,
+  NvidiaProvider,
+  OpenRouterProvider,
+  OllamaProvider,
+} from './providers/index';
 import type { Message } from './types/index';
 
 async function main() {
@@ -6,37 +13,37 @@ async function main() {
 
   // Register providers based on available API keys
   if (process.env.OPENAI_API_KEY) {
-    harness.registerProvider('openai', {
+    harness.registerProvider('openai', new OpenAIProvider({
       apiKey: process.env.OPENAI_API_KEY,
-    });
+    }));
     console.log('✓ OpenAI registered');
   }
 
   if (process.env.ANTHROPIC_API_KEY) {
-    harness.registerProvider('claude', {
+    harness.registerProvider('claude', new ClaudeProvider({
       apiKey: process.env.ANTHROPIC_API_KEY,
-    });
+    }));
     console.log('✓ Claude registered');
   }
 
   if (process.env.NVIDIA_API_KEY) {
-    harness.registerProvider('nvidia', {
+    harness.registerProvider('nvidia', new NvidiaProvider({
       apiKey: process.env.NVIDIA_API_KEY,
-    });
+    }));
     console.log('✓ NVIDIA NIM registered');
   }
 
   if (process.env.OPENROUTER_API_KEY) {
-    harness.registerProvider('openrouter', {
+    harness.registerProvider('openrouter', new OpenRouterProvider({
       apiKey: process.env.OPENROUTER_API_KEY,
-    });
+    }));
     console.log('✓ OpenRouter registered');
   }
 
   // Ollama doesn't require API key
-  harness.registerProvider('ollama', {
+  harness.registerProvider('ollama', new OllamaProvider({
     baseUrl: process.env.OLLAMA_BASE_URL || 'http://localhost:11434',
-  });
+  }));
   console.log('✓ Ollama registered');
 
   console.log('\nRegistered providers:', harness.listProviders());
