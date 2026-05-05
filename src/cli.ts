@@ -8,6 +8,7 @@ import { initEnvFromArgs } from './utils/envInit';
 import { getCommand } from './cli/registry';
 import { registerAllCommands } from './cli/commands/index';
 import type { CliContext, CliState } from './cli/types';
+import { LoadingDisplay } from './utils/loading';
 
 const SYSTEM_PROMPT = 'You are a helpful assistant. Be concise and clear.';
 const TOOLS_SYSTEM_PROMPT = `You are a helpful assistant with access to system tools. Be concise and clear.
@@ -233,8 +234,10 @@ async function main() {
 
     addMessage('user', input);
 
+    const loading = new LoadingDisplay();
+    loading.start();
+
     try {
-      process.stdout.write('Thinking...');
 
       const stream = harness.stream(state.currentProvider, messages, {
         model: state.currentModel,
@@ -249,7 +252,7 @@ async function main() {
       for await (const chunk of stream) {
         if (!chunk.isComplete) {
           if (firstChunk) {
-            process.stdout.write('\r' + ' '.repeat(12) + '\r');
+            loading.stop();
             firstChunk = false;
           }
           process.stdout.write(chunk.text);
@@ -257,9 +260,14 @@ async function main() {
         }
       }
 
+      if (firstChunk) {
+        loading.stop();
+      }
+
       console.log('\n');
       addMessage('assistant', response);
     } catch (err) {
+      loading.stop();
       console.error(`\nError: ${(err as Error).message}\n`);
     }
 
