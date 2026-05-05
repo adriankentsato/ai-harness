@@ -1,11 +1,3 @@
-import {
-  OpenAIProvider,
-  ClaudeProvider,
-  NvidiaProvider,
-  OpenRouterProvider,
-  OllamaProvider,
-  GoogleProvider,
-} from './providers/index';
 import type {
   AIProvider,
   Message,
@@ -13,7 +5,6 @@ import type {
   CompletionResult,
   StreamChunk,
   ProviderType,
-  ProviderConfig,
   ModelInfo,
   Agent,
   AgentConfig,
@@ -27,68 +18,9 @@ import type {
 
 export class AIHarness {
   private providers: Map<ProviderType, AIProvider> = new Map();
-  private configs: Map<ProviderType, ProviderConfig> = new Map();
   private agents: Map<string, Agent> = new Map();
 
-  registerProvider(type: ProviderType, config: ProviderConfig): void {
-    this.configs.set(type, config);
-
-    let provider: AIProvider;
-
-    switch (type) {
-      case 'openai':
-        if (!config.apiKey) throw new Error('OpenAI requires apiKey');
-        provider = new OpenAIProvider({
-          apiKey: config.apiKey,
-          timeout: config.timeout,
-        });
-        break;
-
-      case 'claude':
-        if (!config.apiKey) throw new Error('Claude requires apiKey');
-        provider = new ClaudeProvider({
-          apiKey: config.apiKey,
-          timeout: config.timeout,
-        });
-        break;
-
-      case 'nvidia':
-        if (!config.apiKey) throw new Error('NVIDIA NIM requires apiKey');
-        provider = new NvidiaProvider({
-          apiKey: config.apiKey,
-          baseUrl: config.baseUrl,
-          timeout: config.timeout,
-        });
-        break;
-
-      case 'openrouter':
-        if (!config.apiKey) throw new Error('OpenRouter requires apiKey');
-        provider = new OpenRouterProvider({
-          apiKey: config.apiKey,
-          baseUrl: config.baseUrl,
-          timeout: config.timeout,
-        });
-        break;
-
-      case 'ollama':
-        provider = new OllamaProvider({
-          baseUrl: config.baseUrl,
-          timeout: config.timeout,
-        });
-        break;
-
-      case 'google':
-        if (!config.apiKey) throw new Error('Google requires apiKey');
-        provider = new GoogleProvider({
-          apiKey: config.apiKey,
-          timeout: config.timeout,
-        });
-        break;
-
-      default:
-        throw new Error(`Unknown provider type: ${type}`);
-    }
-
+  registerProvider(type: ProviderType, provider: AIProvider): void {
     if (!provider.validateConfig()) {
       throw new Error(`Invalid configuration for provider: ${type}`);
     }
