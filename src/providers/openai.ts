@@ -134,7 +134,7 @@ export class OpenAIProvider extends AIProvider {
       })),
       system: options.system,
       temperature: options.temperature,
-      maxOutputTokens: options.maxTokens,
+      maxTokens: options.maxTokens,
       topP: options.topP,
       frequencyPenalty: options.frequencyPenalty,
       presencePenalty: options.presencePenalty,
@@ -148,8 +148,8 @@ export class OpenAIProvider extends AIProvider {
     return {
       text: result.text,
       usage: {
-        promptTokens: result.usage.inputTokens || 0,
-        completionTokens: result.usage.outputTokens || 0,
+        promptTokens: result.usage.promptTokens || 0,
+        completionTokens: result.usage.completionTokens || 0,
         totalTokens: result.usage.totalTokens || 0,
       },
       model,
@@ -178,7 +178,7 @@ export class OpenAIProvider extends AIProvider {
       })),
       system: options.system,
       temperature: options.temperature,
-      maxOutputTokens: options.maxTokens,
+      maxTokens: options.maxTokens,
       topP: options.topP,
       frequencyPenalty: options.frequencyPenalty,
       presencePenalty: options.presencePenalty,
