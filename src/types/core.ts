@@ -1,6 +1,8 @@
-import { tool, ToolSet } from 'ai';
+import { CoreTool, tool as toolV1 } from 'ai-v1';
 import { z } from 'zod';
 import { IGenericType } from '../utils/types/generic-type';
+
+type ToolSetV1 = Record<string, CoreTool>;
 
 export interface Message {
   role: 'system' | 'user' | 'assistant';
@@ -89,19 +91,33 @@ export abstract class AIProvider {
 
   abstract fetchModels(): Promise<ModelInfo[]>;
 
-  protected buildTools(tools?: ToolDefinition<IGenericType, IGenericType>[]): ToolSet | undefined {
+  protected buildTools(tools?: ToolDefinition<IGenericType, IGenericType>[]): ToolSetV1 | undefined {
     if (!tools || tools.length === 0) return undefined;
 
     // Return tool definitions directly to avoid type recursion
     // The providers will handle tool creation
     return tools.reduce((acc, t) => {
-      acc[t.name] = tool({
+      acc[t.name] = toolV1({
         description: t.description,
         parameters: t.parameters as IGenericType,
         execute: t.execute,
       });
       return acc;
-    }, {} as ToolSet);
+    }, {} as ToolSetV1);
+  }
+
+  /**
+   * Convert tools to LanguageModelV2 format for new AI SDK V2 providers
+   */
+  protected buildV2Tools(tools?: ToolDefinition<IGenericType, IGenericType>[]): any[] | undefined {
+    if (!tools || tools.length === 0) return undefined;
+    
+    return tools.map((t: any) => ({
+      type: 'function' as const,
+      name: t.name || t.function?.name,
+      description: t.description || t.function?.description,
+      inputSchema: t.parameters || t.function?.parameters
+    }));
   }
 }
 
