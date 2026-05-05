@@ -97,7 +97,7 @@ export abstract class AIProvider {
     return tools.reduce((acc, t) => {
       acc[t.name] = tool({
         description: t.description,
-        inputSchema: t.parameters as IGenericType,
+        parameters: t.parameters as IGenericType,
         execute: t.execute,
       });
       return acc;
