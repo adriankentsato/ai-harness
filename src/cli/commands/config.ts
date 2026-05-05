@@ -1,5 +1,13 @@
 import type { ProviderType } from '../../types/index';
 import type { CliContext } from '../types';
+import {
+  OpenAIProvider,
+  ClaudeProvider,
+  NvidiaProvider,
+  OpenRouterProvider,
+  OllamaProvider,
+  GoogleProvider,
+} from '../../providers/index';
 
 export function handleConfig(context: CliContext, args: string[]): void {
   const { harness, state, rl, updatePrompt, REQUIRED_ENV_VARS } = context;
@@ -27,13 +35,33 @@ export function handleConfig(context: CliContext, args: string[]): void {
     }
 
     try {
-      if (providerName === 'ollama') {
-        harness.registerProvider('ollama', { baseUrl: apiKey });
-        console.log(`✓ Ollama configured at ${apiKey}\n`);
-      } else {
-        harness.registerProvider(providerName, { apiKey });
-        console.log(`✓ ${providerName} configured with provided key\n`);
+      let provider;
+      
+      switch (providerName) {
+        case 'openai':
+          provider = new OpenAIProvider({ apiKey });
+          break;
+        case 'claude':
+          provider = new ClaudeProvider({ apiKey });
+          break;
+        case 'nvidia':
+          provider = new NvidiaProvider({ apiKey });
+          break;
+        case 'openrouter':
+          provider = new OpenRouterProvider({ apiKey });
+          break;
+        case 'ollama':
+          provider = new OllamaProvider({ baseUrl: apiKey });
+          break;
+        case 'google':
+          provider = new GoogleProvider({ apiKey });
+          break;
+        default:
+          throw new Error(`Unknown provider: ${providerName}`);
       }
+
+      harness.registerProvider(providerName, provider);
+      console.log(`✓ ${providerName} configured\n`);
 
       if (!state.currentProvider) {
         state.currentProvider = providerName;
