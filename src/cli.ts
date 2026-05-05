@@ -3,6 +3,14 @@
 import { createInterface } from 'readline';
 import { AIHarness } from './harness';
 import { createAgentWorkflowTools } from './tools/index';
+import {
+  OpenAIProvider,
+  ClaudeProvider,
+  OpenRouterProvider,
+  OllamaProvider,
+  GoogleProvider,
+} from './providers/index';
+import { NvidiaProvider } from './providers/v2';
 import type { Message, ProviderType } from './types/index';
 import { initEnvFromArgs } from './utils/envInit';
 import { getCommand } from './cli/registry';
@@ -54,35 +62,35 @@ async function main() {
 
   // Register providers from env
   if (process.env.OPENAI_API_KEY) {
-    harness.registerProvider('openai', { apiKey: process.env.OPENAI_API_KEY });
+    harness.registerProvider('openai', new OpenAIProvider({ apiKey: process.env.OPENAI_API_KEY }));
     registered.push('openai');
   } else {
     missing.push({ provider: 'openai', reason: 'OPENAI_API_KEY not set' });
   }
 
   if (process.env.ANTHROPIC_API_KEY) {
-    harness.registerProvider('claude', { apiKey: process.env.ANTHROPIC_API_KEY });
+    harness.registerProvider('claude', new ClaudeProvider({ apiKey: process.env.ANTHROPIC_API_KEY }));
     registered.push('claude');
   } else {
     missing.push({ provider: 'claude', reason: 'ANTHROPIC_API_KEY not set' });
   }
 
   if (process.env.NVIDIA_API_KEY) {
-    harness.registerProvider('nvidia', { apiKey: process.env.NVIDIA_API_KEY });
+    harness.registerProvider('nvidia', new NvidiaProvider({ apiKey: process.env.NVIDIA_API_KEY }));
     registered.push('nvidia');
   } else {
     missing.push({ provider: 'nvidia', reason: 'NVIDIA_API_KEY not set' });
   }
 
   if (process.env.OPENROUTER_API_KEY) {
-    harness.registerProvider('openrouter', { apiKey: process.env.OPENROUTER_API_KEY });
+    harness.registerProvider('openrouter', new OpenRouterProvider({ apiKey: process.env.OPENROUTER_API_KEY }));
     registered.push('openrouter');
   } else {
     missing.push({ provider: 'openrouter', reason: 'OPENROUTER_API_KEY not set' });
   }
 
   if (process.env.GOOGLE_AI_API_KEY) {
-    harness.registerProvider('google', { apiKey: process.env.GOOGLE_AI_API_KEY });
+    harness.registerProvider('google', new GoogleProvider({ apiKey: process.env.GOOGLE_AI_API_KEY }));
     registered.push('google');
   } else {
     missing.push({ provider: 'google', reason: 'GOOGLE_AI_API_KEY not set' });
@@ -90,7 +98,7 @@ async function main() {
 
   const ollamaUrl = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
   if (process.env.OLLAMA_BASE_URL) {
-    harness.registerProvider('ollama', { baseUrl: ollamaUrl });
+    harness.registerProvider('ollama', new OllamaProvider({ baseUrl: ollamaUrl }));
     registered.push('ollama');
   } else {
     missing.push({ provider: 'ollama', reason: `Failed to connect to ${ollamaUrl}` });
