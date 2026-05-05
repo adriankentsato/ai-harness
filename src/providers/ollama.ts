@@ -67,7 +67,7 @@ export class OllamaProvider extends AIProvider {
       })),
       system: options.system,
       temperature: options.temperature,
-      maxOutputTokens: options.maxTokens,
+      maxTokens: options.maxTokens,
       topP: options.topP,
       tools,
       abortSignal: abortController.signal,
@@ -78,8 +78,8 @@ export class OllamaProvider extends AIProvider {
     return {
       text: result.text,
       usage: {
-        promptTokens: result.usage.inputTokens || 0,
-        completionTokens: result.usage.outputTokens || 0,
+        promptTokens: result.usage.promptTokens || 0,
+        completionTokens: result.usage.completionTokens || 0,
         totalTokens: result.usage.totalTokens || 0,
       },
       model,
@@ -109,7 +109,7 @@ export class OllamaProvider extends AIProvider {
       })),
       system: options.system,
       temperature: options.temperature,
-      maxOutputTokens: options.maxTokens,
+      maxTokens: options.maxTokens,
       topP: options.topP,
       tools,
       abortSignal: abortController.signal,
