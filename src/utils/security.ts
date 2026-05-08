@@ -167,16 +167,94 @@ export function validatePath(path: string, config: SecurityConfig = defaultSecur
 }
 
 /**
+ * Normalizes a command by collapsing whitespace and lowercasing
+ * This prevents bypasses using extra spaces, tabs, or newlines
+ */
+function normalizeCommand(command: string): string {
+  return command
+    .toLowerCase()
+    // Collapse all whitespace (spaces, tabs, newlines) to single space
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Extracts command tokens for word-boundary matching
+ * Prevents bypasses like "echo; rm -rf" or "$(rm -rf)"
+ */
+function getCommandTokens(command: string): string[] {
+  // Remove shell metacharacters and extract potential command words
+  const sanitized = command
+    .replace(/[;|&<>()$`{}\[\]!\\]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return sanitized.split(' ').filter(t => t.length > 0);
+}
+
+/**
  * Validates if a bash command is safe to execute
  */
 export function validateCommand(command: string, config: SecurityConfig = defaultSecurityConfig): boolean {
-  const lowerCommand = command.toLowerCase();
+  // Check for shell metacharacters that could enable injection
+  const dangerousMetacharacters = [
+    /[;|&]\s*(rm|sudo|su|shutdown|reboot|halt|poweroff|mkfs|fdisk|dd|chmod|chown)\b/,
+    /\$\([^)]*(rm|sudo|su|shutdown|reboot|halt|poweroff)/,
+    /`[^`]*(rm|sudo|su|shutdown|reboot|halt|poweroff)/,
+    />\s*\/(etc|bin|sbin|usr|System|Library|dev|proc|sys)\//,
+    />\s*~\/.\//,
+  ];
 
-  // Check for dangerous commands (exact matches or starts with)
-  for (const dangerousCmd of config.dangerousCommands) {
-    if (lowerCommand.trim().startsWith(dangerousCmd.toLowerCase()) || 
-        lowerCommand.includes(' ' + dangerousCmd.toLowerCase())) {
+  for (const pattern of dangerousMetacharacters) {
+    if (pattern.test(command)) {
       return false;
+    }
+  }
+
+  // Normalize and check for dangerous commands at start or after pipe/and/or
+  const normalized = normalizeCommand(command);
+  const tokens = getCommandTokens(command);
+
+  // Check if any dangerous command appears as a top-level command
+  for (const dangerousCmd of config.dangerousCommands) {
+    const dangerousParts = dangerousCmd.toLowerCase().trim().split(/\s+/);
+    const dangerousBase = dangerousParts[0]; // e.g., "rm" from "rm -rf"
+
+    // Check normalized command starts with dangerous command
+    if (normalized.startsWith(dangerousCmd.toLowerCase())) {
+      return false;
+    }
+
+    // Check if dangerous command appears after shell operators
+    const afterOperatorPattern = new RegExp(`[;&|]\\s*${dangerousBase}\\b`);
+    if (afterOperatorPattern.test(normalized)) {
+      // Additional check: ensure it's not part of a string/argument
+      const beforeMatch = normalized.split(dangerousBase)[0];
+      const lastChar = beforeMatch.slice(-1);
+      // If preceded by operator or start, it's a command
+      if (lastChar === ';' || lastChar === '|' || lastChar === '&' || lastChar === '' || lastChar === ' ') {
+        return false;
+      }
+    }
+
+    // Check tokens for dangerous base command
+    const tokenIndex = tokens.indexOf(dangerousBase);
+    if (tokenIndex !== -1) {
+      // Check if following tokens match the dangerous pattern
+      if (dangerousParts.length > 1) {
+        let matches = true;
+        for (let i = 1; i < dangerousParts.length; i++) {
+          if (tokens[tokenIndex + i] !== dangerousParts[i]) {
+            matches = false;
+            break;
+          }
+        }
+        if (matches) {
+          return false;
+        }
+      } else {
+        // Single word dangerous command
+        return false;
+      }
     }
   }
 
@@ -204,19 +282,6 @@ export function validateCommand(command: string, config: SecurityConfig = defaul
   ];
 
   for (const pattern of traversalPatterns) {
-    if (pattern.test(command)) {
-      return false;
-    }
-  }
-
-  // Check for shell escape patterns
-  const shellEscapes = [
-    /&&\s*(rm|sudo|su|shutdown|reboot|halt|poweroff)/,
-    /\|\|\s*(rm|sudo|su|shutdown|reboot|halt|poweroff)/,
-    /;\s*(rm|sudo|su|shutdown|reboot|halt|poweroff)/,
-  ];
-
-  for (const pattern of shellEscapes) {
     if (pattern.test(command)) {
       return false;
     }
