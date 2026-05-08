@@ -1,5 +1,7 @@
 import { CoreTool, tool as toolV1 } from 'ai-v1';
+import type { JSONSchema7 } from '@ai-sdk/provider';
 import { z } from 'zod';
+import { zodToJsonSchema } from 'zod-to-json-schema';
 import { IGenericType } from '../utils/types/generic-type';
 
 type ToolSetV1 = Record<string, CoreTool>;
@@ -36,6 +38,13 @@ export interface ToolDefinition<INPUT, OUTPUT> {
   description: string;
   parameters: z.ZodTypeAny;
   execute: (args: INPUT) => Promise<OUTPUT>;
+}
+
+export interface V2ToolDefinition {
+  type: 'function';
+  name: string;
+  description: string;
+  inputSchema: JSONSchema7;
 }
 
 export interface ToolCall {
@@ -91,6 +100,27 @@ export abstract class AIProvider {
 
   abstract fetchModels(): Promise<ModelInfo[]>;
 
+  /**
+   * Health check to detect provider degradation
+   * @returns true if provider is healthy, false otherwise
+   */
+  async healthCheck(): Promise<boolean> {
+    try {
+      await this.fetchModels();
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Close provider and cleanup resources
+   * Default implementation is no-op; override for connection cleanup
+   */
+  async close(): Promise<void> {
+    // Default: no-op. Override in providers with connections to cleanup.
+  }
+
   protected buildTools(tools?: ToolDefinition<IGenericType, IGenericType>[]): ToolSetV1 | undefined {
     if (!tools || tools.length === 0) return undefined;
 
@@ -109,14 +139,15 @@ export abstract class AIProvider {
   /**
    * Convert tools to LanguageModelV2 format for new AI SDK V2 providers
    */
-  protected buildV2Tools(tools?: ToolDefinition<IGenericType, IGenericType>[]): any[] | undefined {
+  protected buildV2Tools(tools?: ToolDefinition<IGenericType, IGenericType>[]): V2ToolDefinition[] | undefined {
     if (!tools || tools.length === 0) return undefined;
-    
-    return tools.map((t: any) => ({
-      type: 'function' as const,
-      name: t.name || t.function?.name,
-      description: t.description || t.function?.description,
-      inputSchema: t.parameters || t.function?.parameters
+
+    return tools.map((t): V2ToolDefinition => ({
+      type: 'function',
+      name: t.name,
+      description: t.description,
+      // @ts-expect-error - zodToJsonSchema type instantiation issue with complex generic types
+      inputSchema: zodToJsonSchema(t.parameters, { name: t.name }) as JSONSchema7
     }));
   }
 }
