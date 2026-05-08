@@ -6,11 +6,11 @@ import { createAgentWorkflowTools } from './tools/index';
 import {
   OpenAIProvider,
   ClaudeProvider,
+  NvidiaProvider,
   OpenRouterProvider,
   OllamaProvider,
   GoogleProvider,
 } from './providers/index';
-import { NvidiaProvider } from './providers/v2';
 import type { Message, ProviderType } from './types/index';
 import { initEnvFromArgs } from './utils/envInit';
 import { getCommand } from './cli/registry';
