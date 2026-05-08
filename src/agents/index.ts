@@ -1,14 +1,19 @@
-import { Agent, type AgentConfig, type AgentContext, type AgentResult, type Message } from '../types/index';
+import { Agent, type AgentConfig, type AgentContext, type AgentResult, type Message, ToolDefinition } from '../types/index';
 import type { AIHarness } from '../harness';
+import { IGenericType } from '../utils/types/generic-type';
+import { createToolSet } from '../tools/index';
 
 export class BaseAgent extends Agent {
   readonly name: string;
   readonly description: string;
+  private resolvedTools: ToolDefinition<IGenericType, IGenericType>[];
 
   constructor(config: AgentConfig, harness: AIHarness) {
     super(config, harness);
     this.name = config.name;
     this.description = config.description;
+    // Resolve tool names from config to ToolDefinition[]
+    this.resolvedTools = config.tools ? createToolSet(config.tools) : [];
   }
 
   async execute(input: string, context?: AgentContext): Promise<AgentResult> {
@@ -19,7 +24,8 @@ export class BaseAgent extends Agent {
       { role: 'user' as const, content: input }
     ];
 
-    const tools = context?.tools || [];
+    // Use context tools if provided, otherwise fall back to resolved tools from config
+    const tools = context?.tools || this.resolvedTools;
 
     if (tools.length > 0) {
       return await this.executeWithTools(messages, tools);
