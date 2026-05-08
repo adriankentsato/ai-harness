@@ -5,6 +5,9 @@ import type {
   LanguageModelV2FunctionTool,
   LanguageModelV2StreamPart,
   LanguageModelV2Content,
+  LanguageModelV2TextPart,
+  LanguageModelV2FilePart,
+  LanguageModelV2ToolResultPart,
   ProviderV2,
 } from "@ai-sdk/provider";
 import { generateId, loadApiKey, withoutTrailingSlash } from "@ai-sdk/provider-utils";
@@ -62,6 +65,21 @@ interface OAIContentPart {
   text?: string;
   image_url?: { url: string };
 }
+
+/**
+ * Extended content part type that supports image parts.
+ * AI SDK may pass `type: 'image'` with `image` and `mimeType` properties.
+ */
+interface ExtendedImagePart {
+  type: 'image';
+  image: string | Uint8Array | URL;
+  mimeType?: string;
+}
+
+/**
+ * Union type for user content parts that may include extended image parts.
+ */
+type ExtendedContentPart = LanguageModelV2TextPart | LanguageModelV2FilePart | ExtendedImagePart;
 
 interface OAIToolCall {
   id: string;
@@ -156,11 +174,11 @@ function convertMessages(
 
       case "user": {
         const parts: OAIContentPart[] = [];
-        for (const part of msg.content) {
+        for (const part of msg.content as ExtendedContentPart[]) {
           if (part.type === "text") {
             parts.push({ type: "text", text: part.text });
-          } else if ((part as any).type === "image") {
-            const imagePart = part as any;
+          } else if (part.type === "image") {
+            const imagePart = part as ExtendedImagePart;
             const url =
               imagePart.image instanceof URL
                 ? imagePart.image.toString()
@@ -214,15 +232,14 @@ function convertMessages(
       }
 
       case "tool": {
-        for (const part of msg.content) {
-          const toolResult = part as any;
+        for (const part of msg.content as LanguageModelV2ToolResultPart[]) {
           messages.push({
             role: "tool",
             tool_call_id: part.toolCallId,
             content:
-              typeof toolResult.result === "string"
-                ? toolResult.result
-                : JSON.stringify(toolResult.result),
+              typeof part.output === "string"
+                ? part.output
+                : JSON.stringify(part.output),
           });
         }
         break;
